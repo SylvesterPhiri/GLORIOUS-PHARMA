@@ -85,7 +85,7 @@ export default function ClientDetailPage() {
         phone:       formData.phone    || undefined,
         address:     formData.address  || undefined,
         company:     formData.company  || undefined,
-        type:        formData.type,
+        type:        formData.type as "INDIVIDUAL" | "HOSPITAL" | "PHARMACY" | "COMPANY",
         creditLimit: formData.creditLimit ? parseFloat(formData.creditLimit) : 0,
       });
       setIsEditing(false);
