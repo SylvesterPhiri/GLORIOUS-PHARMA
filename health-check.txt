@@ -1,0 +1,3 @@
+node health-check.js --email admin@superadmin.com --password superuser
+
+node health-check.js --email admin@superadmin.com --password superuser

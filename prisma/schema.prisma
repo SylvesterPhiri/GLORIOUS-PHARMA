@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum ClientType {
+  INDIVIDUAL
+  HOSPITAL
+  PHARMACY
+  COMPANY
+}
+
+enum ProductType {
+  TABLET
+  CAPSULE
+  SYRUP
+  INJECTION
+  OINTMENT
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  PHARMACIST
+  SALES_REP
+  ACCOUNTANT
+}
+
+model User {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String
+  role        UserRole  @default(PHARMACIST)
+  permissions String    @default("[]")
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String
+  entityId    String?
+  userId      String?
+  description String?
+  oldData     String?
+  newData     String?
+  changes     String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// Key-value store for system settings (companyName, currency, etc.)
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// Company expenses for accounting
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float    @default(0)
+  category    String   @default("Operations")
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("expenses")
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  company     String?
+  type        ClientType @default(INDIVIDUAL)
+  creditLimit Float?     @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  invoices Invoice[]
+
+  @@map("clients")
+}
+
+model Manufacturer {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  contactPerson String?
+  phone         String?
+  email         String?
+  motherCompany String?
+  address       String?
+  location      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  products Product[]
+
+  @@map("manufacturers")
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  name           String
+  genericName    String?
+  type           ProductType @default(TABLET)
+  category       String?
+  manufacturerId String
+  batchNumber    String
+  expiryDate     DateTime
+  unit           String      @default("pack")
+  price          Float       @default(0)
+  currentStock   Int         @default(0)
+  initialStock   Int         @default(0)
+  minStock       Int         @default(10)
+  reorderLevel   Int         @default(20)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  manufacturer Manufacturer  @relation(fields: [manufacturerId], references: [id])
+  invoiceItems InvoiceItem[]
+  returns      Return[]
+
+  @@map("products")
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  invoiceNumber    String        @unique
+  clientId         String
+  invoiceDate      DateTime      @default(now())
+  dueDate          DateTime
+  status           InvoiceStatus @default(PENDING)
+  subTotal         Float         @default(0)
+  tax              Float         @default(0)
+  total            Float         @default(0)
+  notes            String?
+  hasReturns       Boolean       @default(false)
+  isHistorical     Boolean       @default(false)
+  affectsInventory Boolean       @default(true)
+  historicalNote   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  client   Client        @relation(fields: [clientId], references: [id])
+  items    InvoiceItem[]
+  payments Payment[]
+  returns  Return[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              String   @id @default(cuid())
+  invoiceId       String
+  productId       String?
+  quantity        Int      @default(1)
+  freeSamples     Int      @default(0)
+  unitPrice       Float    @default(0)
+  totalPrice      Float    @default(0)
+  productSnapshot String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  invoiceId    String
+  amount       Float         @default(0)
+  method       PaymentMethod @default(CASH)
+  chequeNumber String?
+  bankName     String?
+  paymentDate  DateTime      @default(now())
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model Return {
+  id         String   @id @default(cuid())
+  invoiceId  String
+  productId  String
+  quantity   Int      @default(1)
+  reason     String   @default("No reason provided")
+  returnDate DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("returns")
+}
