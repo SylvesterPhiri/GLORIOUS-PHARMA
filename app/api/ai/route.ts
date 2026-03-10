@@ -318,12 +318,7 @@ export async function POST(request: NextRequest) {
     console.log('📊 Request type:', type);
     console.log('💬 Query:', query || 'N/A');
 
-    // Check for Cloudflare credentials
-    console.log('\n=== 🔐 ENV VARIABLE CHECK ===');
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('=========================\n');
-
-    }
+    // Using Groq AI
 
     console.log('📊 Fetching business snapshot...');
     const data = await getBusinessSnapshot();
