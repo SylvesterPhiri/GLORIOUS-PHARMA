@@ -298,71 +298,7 @@ async function getBusinessSnapshot() {
   };
 }
 
-// ── Call Cloudflare AI using native API ─────────────────────────────────────
-async function callCloudflareAI(systemPrompt: string, userMessage: string): Promise<string> {
-  console.log('🔍 [CloudflareAI] Starting request...');
-  console.log('🔍 [CloudflareAI] Account ID exists:', !!process.env.CLOUDFLARE_ACCOUNT_ID);
-  console.log('🔍 [CloudflareAI] API Token exists:', !!process.env.CLOUDFLARE_API_KEY);
-  console.log('🔍 [CloudflareAI] Account ID length:', process.env.CLOUDFLARE_ACCOUNT_ID?.length);
-  console.log('🔍 [CloudflareAI] Token length:', process.env.CLOUDFLARE_API_KEY?.length);
-  
-  if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_KEY) {
-    console.error('❌ [CloudflareAI] Missing credentials!');
-    throw new Error('CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_KEY not set in .env');
-  }
-
-  try {
-    const fullPrompt = `${systemPrompt}\n\nUser Query: ${userMessage}\n\nRespond as a trusted business advisor using the provided data. Be specific with numbers and actionable.`;
-
-    console.log('🔍 [CloudflareAI] Making API request to Cloudflare...');
-    
-    // Using fetch directly to call Cloudflare's API
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
-      {
-        method: 'POST',
-        headers: {
-          'X-Auth-Email': process.env.CLOUDFLARE_EMAIL!,
-          'X-Auth-Key': process.env.CLOUDFLARE_API_KEY!,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: fullPrompt,
-          max_tokens: 1500,
-          temperature: 0.7,
-        }),
-      }
-    );
-
-    console.log('🔍 [CloudflareAI] Response status:', response.status);
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ [CloudflareAI] Error response:', error);
-      throw new Error(`Cloudflare API error: ${response.status} - ${error}`);
-    }
-
-    const result = await response.json();
-    console.log('🔍 [CloudflareAI] Response success:', result.success);
-
-    // Extract the response text - structure varies by model
-    if (result.success && result.result) {
-      // For Llama models, the response is in result.response
-      if (typeof result.result === 'object' && 'response' in result.result) {
-        console.log('✅ [CloudflareAI] Successfully got response');
-        return result.result.response;
-      }
-      console.log('✅ [CloudflareAI] Got response in alternative format');
-      return JSON.stringify(result.result);
-    }
-
-    console.error('❌ [CloudflareAI] Unexpected response format:', result);
-    throw new Error('Unexpected response format from Cloudflare AI');
-  } catch (error: any) {
-    console.error('❌ [CloudflareAI] Error:', error);
-    throw new Error(`Cloudflare AI error: ${error.message}`);
-  }
-}
+// ── Call Groq AI ─────────────────────────────────────────────────────────────
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
@@ -384,16 +320,9 @@ export async function POST(request: NextRequest) {
 
     // Check for Cloudflare credentials
     console.log('\n=== 🔐 ENV VARIABLE CHECK ===');
-    console.log('CLOUDFLARE_ACCOUNT_ID exists:', !!process.env.CLOUDFLARE_ACCOUNT_ID);
-    console.log('CLOUDFLARE_API_KEY exists:', !!process.env.CLOUDFLARE_API_KEY);
-    console.log('CLOUDFLARE_ACCOUNT_ID value:', process.env.CLOUDFLARE_ACCOUNT_ID ? `[${process.env.CLOUDFLARE_ACCOUNT_ID.substring(0, 5)}...]` : 'missing');
-    console.log('CLOUDFLARE_API_KEY value:', process.env.CLOUDFLARE_API_KEY ? '[hidden - exists]' : 'missing');
     console.log('NODE_ENV:', process.env.NODE_ENV);
     console.log('=========================\n');
 
-    if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_KEY) {
-      console.error('❌ Cloudflare credentials missing in .env');
-      return NextResponse.json({ error: 'Cloudflare credentials not set in .env' }, { status: 500 });
     }
 
     console.log('📊 Fetching business snapshot...');
