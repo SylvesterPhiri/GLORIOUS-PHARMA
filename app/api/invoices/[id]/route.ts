@@ -1,4 +1,4 @@
-// app/api/invoices/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -44,7 +44,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PATCH — mark as paid / update status
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getSession();
@@ -60,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       const { amount, method, paymentDate, chequeNumber, bankName, notes } = body;
 
       const updated = await prisma.$transaction(async (tx) => {
-        // Create payment record
+
         await tx.payment.create({
           data: {
             invoiceId:    id,
@@ -73,7 +72,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           },
         });
 
-        // Update invoice status to PAID
         return tx.invoice.update({
           where: { id },
           data:  { status: 'PAID' },

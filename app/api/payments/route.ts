@@ -1,4 +1,4 @@
-// app/api/payments/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const method = searchParams.get('method');
     const invoiceId = searchParams.get('invoiceId');
 
-    // Build where clause
     const where: any = {};
 
     if (startDate || endDate) {
@@ -52,10 +51,8 @@ export async function GET(request: NextRequest) {
       orderBy: { paymentDate: 'desc' }
     });
 
-    // Calculate totals
     const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-    
-    // Group by payment method for stats
+
     const byMethod = payments.reduce((acc: Record<string, { count: number; total: number }>, p) => {
       if (!acc[p.method]) acc[p.method] = { count: 0, total: 0 };
       acc[p.method].count++;
@@ -90,7 +87,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { invoiceId, amount, method, chequeNumber, bankName, paymentDate, notes } = body;
 
-    // Validation
     if (!invoiceId) {
       return NextResponse.json(
         { error: 'Invoice ID is required' },
@@ -105,7 +101,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if invoice exists
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: { payments: true }
@@ -118,7 +113,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create payment
     const payment = await prisma.payment.create({
       data: {
         invoiceId,
@@ -138,14 +132,12 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Calculate total paid so far
     const allPayments = await prisma.payment.findMany({
       where: { invoiceId }
     });
 
     const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
 
-    // If total paid equals or exceeds invoice total, update invoice status to PAID
     if (totalPaid >= invoice.total && invoice.status !== 'PAID') {
       await prisma.invoice.update({
         where: { id: invoiceId },
@@ -153,7 +145,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Log audit
     await prisma.auditLog.create({
       data: {
         action: 'PAYMENT_CREATED',

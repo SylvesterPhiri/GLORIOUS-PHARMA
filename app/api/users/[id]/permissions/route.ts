@@ -1,4 +1,4 @@
-// app/api/users/[id]/permissions/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -24,7 +24,6 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Parse permissions from JSON string (they're stored as JSON string in your schema)
     const permissions = user.permissions ? JSON.parse(user.permissions) : [];
     
     return NextResponse.json({ permissions, role: user.role });
@@ -43,8 +42,7 @@ export async function PUT(
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    // Only SUPER_ADMIN and ADMIN can change permissions
+
     if (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -60,7 +58,6 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Update permissions (store as JSON string)
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
@@ -69,7 +66,6 @@ export async function PUT(
       select: { id: true, name: true, email: true, role: true, permissions: true }
     });
 
-    // Log the permission change
     await logAudit({
       action: 'PERMISSIONS_UPDATED',
       entityType: 'USER',
@@ -89,7 +85,6 @@ export async function PUT(
   }
 }
 
-// Helper function for audit logging (copy from your existing code)
 async function logAudit(data: any) {
   try {
     await prisma.auditLog.create({

@@ -226,7 +226,7 @@ export default function EditProductPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -285,7 +285,7 @@ export default function EditProductPage() {
           </div>
         </div>
 
-        {/* Error banner */}
+        {}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 text-red-700 rounded-2xl flex items-center gap-3">
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,10 +298,10 @@ export default function EditProductPage() {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            {/* Left — Main fields */}
+            {}
             <div className="lg:col-span-2 space-y-8">
 
-              {/* Basic Information */}
+              {}
               <div className="bg-white rounded-2xl shadow-2xl p-6">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 flex items-center justify-center mr-4">
@@ -397,7 +397,7 @@ export default function EditProductPage() {
                 </div>
               </div>
 
-              {/* Batch & Expiry */}
+              {}
               <div className="bg-white rounded-2xl shadow-2xl p-6">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-teal-100 flex items-center justify-center mr-4">
@@ -439,7 +439,7 @@ export default function EditProductPage() {
                 </div>
               </div>
 
-              {/* Stock & Pricing */}
+              {}
               <div className="bg-white rounded-2xl shadow-2xl p-6">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-100 to-yellow-100 flex items-center justify-center mr-4">
@@ -523,10 +523,10 @@ export default function EditProductPage() {
 
             </div>
 
-            {/* Right — Sidebar */}
+            {}
             <div className="space-y-8">
 
-              {/* Stock Overview card */}
+              {}
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-2xl p-6 text-white">
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -552,7 +552,7 @@ export default function EditProductPage() {
                 )}
               </div>
 
-              {/* Quick Summary */}
+              {}
               <div className="bg-white rounded-2xl shadow-2xl p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Summary</h3>
                 <div className="space-y-4">
@@ -591,7 +591,7 @@ export default function EditProductPage() {
                 </div>
               </div>
 
-              {/* Quick Actions */}
+              {}
               <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl shadow-2xl p-6 text-white">
                 <h3 className="text-xl font-bold mb-6">Quick Actions</h3>
                 <div className="space-y-3">

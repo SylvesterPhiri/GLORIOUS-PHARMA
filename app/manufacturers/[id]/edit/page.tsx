@@ -71,7 +71,6 @@ export default function EditManufacturerPage() {
         throw new Error('Failed to update manufacturer');
       }
 
-      // Success - redirect back to detail page
       router.push(`/manufacturers/${id}`);
       router.refresh();
     } catch (err) {
@@ -94,7 +93,7 @@ export default function EditManufacturerPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -126,7 +125,7 @@ export default function EditManufacturerPage() {
           </div>
         </div>
 
-        {/* Error Message */}
+        {}
         {error && (
           <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-2xl p-6">
             <div className="flex items-center text-red-700">
@@ -138,12 +137,12 @@ export default function EditManufacturerPage() {
           </div>
         )}
 
-        {/* Form Card */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               
-              {/* Required Name Field */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Manufacturer Name <span className="text-red-500">*</span>
@@ -160,7 +159,7 @@ export default function EditManufacturerPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Contact Person */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Contact Person
@@ -182,7 +181,7 @@ export default function EditManufacturerPage() {
                   </div>
                 </div>
 
-                {/* Mother Company */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Parent/Mother Company
@@ -206,7 +205,7 @@ export default function EditManufacturerPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Email */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Email Address
@@ -228,7 +227,7 @@ export default function EditManufacturerPage() {
                   </div>
                 </div>
 
-                {/* Phone */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Phone Number
@@ -251,7 +250,7 @@ export default function EditManufacturerPage() {
                 </div>
               </div>
 
-              {/* Location */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Location
@@ -274,7 +273,7 @@ export default function EditManufacturerPage() {
                 </div>
               </div>
 
-              {/* Address */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Address
@@ -297,7 +296,7 @@ export default function EditManufacturerPage() {
                 </div>
               </div>
 
-              {/* Buttons */}
+              {}
               <div className="flex gap-3 pt-6">
                 <button
                   type="submit"

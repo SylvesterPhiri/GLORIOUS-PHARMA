@@ -1,4 +1,4 @@
-// app/api/invoices/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { InvoiceStatus } from '@prisma/client';
@@ -102,7 +102,6 @@ export async function POST(request: NextRequest) {
       if (price === undefined || price === null || price < 0) return NextResponse.json({ error: 'All items must have a valid price' }, { status: 400 });
     }
 
-    // Stock check — must cover quantity + free samples combined
     if (!isHistorical && affectsInventory) {
       for (const item of data.items as InvoiceItemInput[]) {
         const freeSamples = parseInt(String(item.freeSamples ?? item.freeSample ?? 0)) || 0;
@@ -137,7 +136,6 @@ export async function POST(request: NextRequest) {
       const quantity    = parseInt(String(item.quantity));
       const freeSamples = parseInt(String(item.freeSamples ?? item.freeSample ?? 0)) || 0;
 
-      // Total price = paid quantity only (free samples are excluded from billing)
       const totalPrice = quantity * unitPrice;
       subTotal += totalPrice;
 
@@ -176,7 +174,6 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // ✅ Deduct BOTH sold quantity AND free samples from inventory
         if (!isHistorical && affectsInventory && itemData.productId) {
           await tx.product.update({
             where: { id: itemData.productId },

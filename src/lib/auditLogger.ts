@@ -1,7 +1,5 @@
-// src/lib/auditLogger.ts
-import { prisma } from './prisma';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { prisma } from './prisma';
 
 export type EntityType =
   | 'INVOICE'
@@ -29,14 +27,9 @@ export interface AuditLogOptions {
   description?: string | null;  // human-readable summary
 }
 
-// ─── AuditLogger ─────────────────────────────────────────────────────────────
-
 export class AuditLogger {
 
-  /**
-   * Core log method — writes one record to auditLogs table.
-   * Never throws — audit failure must never break main functionality.
-   */
+  
   static async log(opts: AuditLogOptions): Promise<boolean> {
     try {
       await (prisma as any).auditLog.create({
@@ -62,9 +55,6 @@ export class AuditLogger {
     }
   }
 
-  // ── Convenience helpers ───────────────────────────────────────────────────
-
-  // INVOICES
   static invoice = {
     created:  (id: string, data: any, userId?: string) =>
       AuditLogger.log({ action: 'INVOICE_CREATED',  entityType: 'INVOICE', entityId: id, userId, newData: data, description: `Invoice ${data?.invoiceNumber ?? id} created` }),
@@ -78,7 +68,6 @@ export class AuditLogger {
       AuditLogger.log({ action: 'INVOICE_PAID',     entityType: 'INVOICE', entityId: id, userId, changes: { amount }, description: `Invoice ${id} marked as paid — K${amount}` }),
   };
 
-  // CLIENTS
   static client = {
     created: (id: string, data: any, userId?: string) =>
       AuditLogger.log({ action: 'CLIENT_CREATED', entityType: 'CLIENT', entityId: id, userId, newData: data, description: `Client "${data?.name}" created` }),
@@ -88,7 +77,6 @@ export class AuditLogger {
       AuditLogger.log({ action: 'CLIENT_DELETED', entityType: 'CLIENT', entityId: id, userId, oldData: data, description: `Client "${data?.name ?? id}" deleted` }),
   };
 
-  // PRODUCTS / INVENTORY
   static product = {
     created:       (id: string, data: any, userId?: string) =>
       AuditLogger.log({ action: 'PRODUCT_CREATED',        entityType: 'PRODUCT', entityId: id, userId, newData: data, description: `Product "${data?.name}" added to inventory` }),
@@ -104,7 +92,6 @@ export class AuditLogger {
       AuditLogger.log({ action: 'PRODUCT_EXPIRING_SOON',  entityType: 'PRODUCT', entityId: id, changes: { expiryDate }, description: `Expiry alert: "${name}" expires ${expiryDate}` }),
   };
 
-  // MANUFACTURERS
   static manufacturer = {
     created: (id: string, data: any, userId?: string) =>
       AuditLogger.log({ action: 'MANUFACTURER_CREATED', entityType: 'MANUFACTURER', entityId: id, userId, newData: data, description: `Manufacturer "${data?.name}" created` }),
@@ -114,13 +101,11 @@ export class AuditLogger {
       AuditLogger.log({ action: 'MANUFACTURER_DELETED', entityType: 'MANUFACTURER', entityId: id, userId, oldData: data }),
   };
 
-  // RETURNS
   static return = {
     processed: (id: string, invoiceId: string, items: any[], userId?: string) =>
       AuditLogger.log({ action: 'RETURN_PROCESSED', entityType: 'RETURN', entityId: id, userId, changes: { invoiceId, items }, description: `Return processed for invoice ${invoiceId}` }),
   };
 
-  // PAYMENTS
   static payment = {
     recorded: (id: string, invoiceId: string, amount: number, method: string, userId?: string) =>
       AuditLogger.log({ action: 'PAYMENT_RECORDED', entityType: 'PAYMENT', entityId: id, userId, changes: { invoiceId, amount, method }, description: `Payment K${amount} via ${method} recorded` }),
@@ -128,7 +113,6 @@ export class AuditLogger {
       AuditLogger.log({ action: 'PAYMENT_DELETED',  entityType: 'PAYMENT', entityId: id, userId, description: `Payment ${id} deleted` }),
   };
 
-  // EXPENSES
   static expense = {
     created: (id: string, data: any, userId?: string) =>
       AuditLogger.log({ action: 'EXPENSE_CREATED', entityType: 'EXPENSE', entityId: id, userId, newData: data, description: `Expense "${data?.description}" of K${data?.amount} recorded` }),
@@ -136,7 +120,6 @@ export class AuditLogger {
       AuditLogger.log({ action: 'EXPENSE_DELETED', entityType: 'EXPENSE', entityId: id, userId, oldData: data }),
   };
 
-  // USERS
   static user = {
     created:     (id: string, data: any, byUserId?: string) =>
       AuditLogger.log({ action: 'USER_CREATED',      entityType: 'USER', entityId: id, userId: byUserId, newData: { ...data, password: '[REDACTED]' }, description: `User "${data?.name}" created` }),
@@ -154,13 +137,11 @@ export class AuditLogger {
       AuditLogger.log({ action: 'USER_PERMISSIONS_CHANGED', entityType: 'USER', entityId: id, userId: byUserId, changes, description: `Permissions updated for user ${id}` }),
   };
 
-  // SETTINGS
   static settings = {
     updated: (key: string, oldVal: any, newVal: any, userId?: string) =>
       AuditLogger.log({ action: 'SETTINGS_UPDATED', entityType: 'SETTINGS', entityId: key, userId, oldData: { value: oldVal }, newData: { value: newVal }, description: `Setting "${key}" changed` }),
   };
 
-  // SYSTEM
   static system = {
     event: (action: string, description: string, data?: any) =>
       AuditLogger.log({ action, entityType: 'SYSTEM', description, changes: data }),

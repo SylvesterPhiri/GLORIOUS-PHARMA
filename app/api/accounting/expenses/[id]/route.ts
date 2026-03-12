@@ -1,4 +1,4 @@
-// app/api/accounting/expenses/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -22,7 +22,6 @@ async function logAudit(data: {
   } catch {}
 }
 
-// ── PUT — edit expense ────────────────────────────────────────────────────────
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -62,7 +61,6 @@ export async function PUT(
   }
 }
 
-// ── DELETE — remove expense ───────────────────────────────────────────────────
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }

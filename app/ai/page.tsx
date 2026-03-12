@@ -1,10 +1,9 @@
-// app/ai/page.tsx  — drop in at app/ai/page.tsx
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface DataSnapshot {
   totalRevenue:    number;
   monthRevenue:    number;
@@ -28,7 +27,6 @@ interface ChatMessage {
 
 type ActiveTab = 'insights' | 'inventory' | 'clients' | 'financial' | 'chat';
 
-// ── API helper ────────────────────────────────────────────────────────────────
 async function callAI(type: string, query?: string) {
   const res = await fetch('/api/ai', {
     method:  'POST',
@@ -42,13 +40,11 @@ async function callAI(type: string, query?: string) {
   return res.json();
 }
 
-// ── Formatting ────────────────────────────────────────────────────────────────
 const fmt = (n: number) => `ZMW ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const now  = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-// ── AI Response renderer ──────────────────────────────────────────────────────
 function AIResponse({ text }: { text: string }) {
-  // Split into paragraphs/numbered items for readability
+
   const lines = text.split('\n').filter(l => l.trim());
   return (
     <div className="space-y-2 text-gray-700 text-sm leading-relaxed">
@@ -61,7 +57,6 @@ function AIResponse({ text }: { text: string }) {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function AIDashboard() {
   const [activeTab, setActiveTab]       = useState<ActiveTab>('insights');
   const [loading, setLoading]           = useState(false);
@@ -83,10 +78,8 @@ export default function AIDashboard() {
     { id: 'chat',       label: 'Ask AI',             icon: '💬', desc: 'Natural language queries' },
   ];
 
-  // Auto-load insights on mount
   useEffect(() => { runAnalysis('insights'); }, []);
 
-  // Scroll chat to bottom
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
 
   const runAnalysis = async (type: ActiveTab) => {
@@ -138,7 +131,7 @@ export default function AIDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Header ── */}
+      {}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -162,7 +155,7 @@ export default function AIDashboard() {
 
       <div className="p-6 max-w-7xl mx-auto">
 
-        {/* ── KPI Strip (from real snapshot data) ── */}
+        {}
         {snapshot && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
             {[
@@ -184,9 +177,9 @@ export default function AIDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-          {/* ── Left sidebar: tabs + quick data ── */}
+          {}
           <div className="space-y-4">
-            {/* Tab buttons */}
+            {}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {TABS.map(tab => (
                 <button
@@ -207,10 +200,10 @@ export default function AIDashboard() {
               ))}
             </div>
 
-            {/* Quick data panels */}
+            {}
             {snapshot && (
               <>
-                {/* Top products */}
+                {}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Top Products</h3>
                   <div className="space-y-2">
@@ -226,7 +219,7 @@ export default function AIDashboard() {
                   </div>
                 </div>
 
-                {/* Low stock alerts */}
+                {}
                 {snapshot.lowStock.length > 0 && (
                   <div className="bg-orange-50 rounded-2xl border border-orange-200 p-4">
                     <h3 className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-3">⚠ Low Stock</h3>
@@ -241,7 +234,7 @@ export default function AIDashboard() {
                   </div>
                 )}
 
-                {/* Expiry risk */}
+                {}
                 {snapshot.expiryRisk.length > 0 && (
                   <div className="bg-red-50 rounded-2xl border border-red-200 p-4">
                     <h3 className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-3">🚨 Expiry Risk</h3>
@@ -259,10 +252,10 @@ export default function AIDashboard() {
             )}
           </div>
 
-          {/* ── Main content area ── */}
+          {}
           <div className="lg:col-span-3">
 
-            {/* Analysis tabs */}
+            {}
             {activeTab !== 'chat' && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -306,7 +299,7 @@ export default function AIDashboard() {
 
                   {response && !loading && !error && (
                     <div className="space-y-4">
-                      {/* AI response text */}
+                      {}
                       <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">🧠</div>
@@ -315,7 +308,7 @@ export default function AIDashboard() {
                         <AIResponse text={response} />
                       </div>
 
-                      {/* Supporting data tables */}
+                      {}
                       {activeTab === 'clients' && snapshot && (
                         <div className="overflow-x-auto rounded-xl border border-gray-200">
                           <table className="min-w-full divide-y divide-gray-100">
@@ -383,7 +376,7 @@ export default function AIDashboard() {
               </div>
             )}
 
-            {/* ── Chat tab ── */}
+            {}
             {activeTab === 'chat' && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style={{ height: '70vh' }}>
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -394,7 +387,7 @@ export default function AIDashboard() {
                   <span className="text-xs text-gray-400">Ask anything about your business in plain English</span>
                 </div>
 
-                {/* Quick questions */}
+                {}
                 <div className="px-6 py-3 border-b border-gray-50 flex flex-wrap gap-2">
                   {QUICK_QUESTIONS.map((q, i) => (
                     <button
@@ -407,7 +400,7 @@ export default function AIDashboard() {
                   ))}
                 </div>
 
-                {/* Messages */}
+                {}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -436,7 +429,7 @@ export default function AIDashboard() {
                   <div ref={chatEndRef} />
                 </div>
 
-                {/* Input */}
+                {}
                 <div className="px-6 py-4 border-t border-gray-100">
                   <div className="flex gap-3">
                     <input

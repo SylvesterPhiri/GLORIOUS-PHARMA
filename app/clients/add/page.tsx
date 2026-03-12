@@ -1,4 +1,4 @@
-// app/clients/add/page.tsx
+
 'use client';
 
 import { useState } from "react";
@@ -29,8 +29,7 @@ export default function AddClientPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required field
+
     if (!formData.name.trim()) {
       alert("Client name is required");
       return;
@@ -39,7 +38,7 @@ export default function AddClientPage() {
     setIsSubmitting(true);
 
     try {
-      // Prepare data for API
+
       const clientData = {
         name: formData.name,
         email: formData.email || undefined,
@@ -65,7 +64,7 @@ export default function AddClientPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header with Dashboard and Clients breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -95,12 +94,12 @@ export default function AddClientPage() {
           </div>
         </div>
 
-        {/* Form Card */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               
-              {/* Required Name Field */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Client Name <span className="text-red-500">*</span>
@@ -118,7 +117,7 @@ export default function AddClientPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Company Name */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Company Name <span className="text-gray-400 text-xs">(Optional)</span>
@@ -133,7 +132,7 @@ export default function AddClientPage() {
                   />
                 </div>
 
-                {/* Client Type */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Client Type
@@ -153,7 +152,7 @@ export default function AddClientPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Email */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Email Address <span className="text-gray-400 text-xs">(Optional)</span>
@@ -175,7 +174,7 @@ export default function AddClientPage() {
                   </div>
                 </div>
 
-                {/* Phone */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Phone Number <span className="text-gray-400 text-xs">(Optional)</span>
@@ -198,7 +197,7 @@ export default function AddClientPage() {
                 </div>
               </div>
 
-              {/* Address */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Address <span className="text-gray-400 text-xs">(Optional)</span>
@@ -221,7 +220,7 @@ export default function AddClientPage() {
                 </div>
               </div>
 
-              {/* Credit Limit */}
+              {}
               <div className="max-w-xs">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Credit Limit <span className="text-gray-400 text-xs">(Optional)</span>
@@ -243,7 +242,7 @@ export default function AddClientPage() {
                 </div>
               </div>
 
-              {/* Buttons */}
+              {}
               <div className="flex gap-3 pt-6">
                 <button
                   type="submit"
@@ -279,7 +278,7 @@ export default function AddClientPage() {
           </form>
         </div>
 
-        {/* Info Card */}
+        {}
         <div className="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">

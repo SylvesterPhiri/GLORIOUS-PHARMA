@@ -1,4 +1,4 @@
-// app/api/accounting/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 
@@ -25,7 +25,6 @@ export async function GET(_request: NextRequest) {
       .reduce((s, i) => s + i.total, 0);
     const pendingRevenue = pending.reduce((s, i) => s + i.total, 0);
 
-    // Calculate return value from invoice items
     const totalRefunds = returns.reduce((sum, r) => {
       const items = r.invoice?.items ?? [];
       const item  = items.find((it: any) => it.productId === r.productId);

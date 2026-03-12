@@ -279,7 +279,7 @@ export default function ReturnInvoicePage() {
           )}
         </div>
 
-        {/* Return Summary */}
+        {}
         {returnItems.some((item) => item.quantity > 0) && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
             <h3 className="font-semibold text-blue-900 mb-4">Return Summary</h3>

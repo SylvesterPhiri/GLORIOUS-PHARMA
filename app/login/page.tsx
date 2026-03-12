@@ -30,7 +30,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Success — go to dashboard
       router.push('/');
       router.refresh();
     } catch {
@@ -43,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#0f1117] flex items-center justify-center p-4">
 
-      {/* Background subtle grid */}
+      {}
       <div
         className="fixed inset-0 opacity-[0.03]"
         style={{
@@ -54,10 +53,10 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm">
 
-        {/* Card */}
+        {}
         <div className="bg-[#141720] rounded-2xl border border-white/8 shadow-2xl p-8">
 
-          {/* Logo */}
+          {}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <span className="text-base font-black text-white">GP</span>
@@ -68,13 +67,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Heading */}
+          {}
           <div className="mb-7">
             <h2 className="text-2xl font-bold text-white">Welcome back</h2>
             <p className="text-white/40 text-sm mt-1">Sign in to your account to continue</p>
           </div>
 
-          {/* Error */}
+          {}
           {error && (
             <div className="mb-5 flex items-start gap-2.5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl">
               <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,10 +83,10 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Form */}
+          {}
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Email */}
+            {}
             <div>
               <label className="block text-xs font-medium text-white/50 mb-1.5 uppercase tracking-wider">
                 Email address
@@ -104,7 +103,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
+            {}
             <div>
               <label className="block text-xs font-medium text-white/50 mb-1.5 uppercase tracking-wider">
                 Password
@@ -139,7 +138,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
+            {}
             <button
               type="submit"
               disabled={loading}
@@ -161,7 +160,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Setup hint — shown only in dev */}
+        {}
         {process.env.NODE_ENV !== 'production' && (
           <p className="text-center text-white/20 text-xs mt-5">
             First time? Run{' '}

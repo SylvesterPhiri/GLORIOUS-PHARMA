@@ -1,10 +1,9 @@
-// app/api/users/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
 import bcrypt from 'bcryptjs';
 
-// Default permissions per role — assigned automatically on user creation
 const DEFAULT_PERMS_BY_ROLE: Record<string, string[]> = {
   SUPER_ADMIN: ['invoices.view','invoices.create','invoices.edit','invoices.delete','clients.view','clients.create','clients.edit','clients.delete','inventory.view','inventory.create','inventory.edit','inventory.delete','manufacturers.view','manufacturers.edit','reports.view','accounting.view','accounting.edit','users.view','users.manage','settings.view','settings.edit','audit.view','returns.view','returns.process'],
   ADMIN:       ['invoices.view','invoices.create','invoices.edit','invoices.delete','clients.view','clients.create','clients.edit','clients.delete','inventory.view','inventory.create','inventory.edit','inventory.delete','manufacturers.view','manufacturers.edit','reports.view','accounting.view','accounting.edit','users.view','returns.view','returns.process'],
@@ -60,7 +59,6 @@ export async function POST(request: NextRequest) {
     const hashed     = await bcrypt.hash(password, 12);
     const assignRole = role ?? 'PHARMACIST';
 
-    // Automatically assign default permissions for the role
     const defaultPerms = DEFAULT_PERMS_BY_ROLE[assignRole] ?? [];
 
     const user = await prisma.user.create({

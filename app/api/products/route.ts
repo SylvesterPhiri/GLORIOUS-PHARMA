@@ -1,4 +1,4 @@
-// app/api/products/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     const limit  = parseInt(searchParams.get('limit') || '20');
     const skip   = (page - 1) * limit;
 
-    // SQLite: no mode:'insensitive'
     const where = search ? {
       OR: [
         { name:        { contains: search } },

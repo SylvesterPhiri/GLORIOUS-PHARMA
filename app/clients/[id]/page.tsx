@@ -1,4 +1,4 @@
-// app/clients/[id]/page.tsx
+
 'use client';
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -46,7 +46,7 @@ export default function ClientDetailPage() {
           type:        data.type,
           creditLimit: data.creditLimit?.toString() || '0',
         });
-        // Fetch real invoices for this client
+
         fetchClientInvoices(data.name);
       }
     } catch (error) {
@@ -62,7 +62,7 @@ export default function ClientDetailPage() {
       if (!res.ok) return;
       const data = await res.json();
       const all: Invoice[] = data.invoices ?? [];
-      // Filter to only this client's invoices
+
       const mine = all.filter((inv: any) => inv.client?.name === clientName || inv.clientId === clientId);
       setInvoices(mine);
     } catch (err) {
@@ -110,7 +110,6 @@ export default function ClientDetailPage() {
     }
   };
 
-  // Real stats from actual invoices
   const totalInvoices  = invoices.length;
   const totalPurchase  = invoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
   const outstanding    = invoices.filter((i) => i.status === 'PENDING' || i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0);
@@ -153,7 +152,7 @@ export default function ClientDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/clients" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -212,13 +211,13 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
-        {/* Content */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Left — Client info */}
+          {}
           <div className="lg:col-span-2 space-y-8">
 
-            {/* Client Information */}
+            {}
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 flex items-center justify-center mr-4">
@@ -284,7 +283,7 @@ export default function ClientDetailPage() {
               )}
             </div>
 
-            {/* Contact Information */}
+            {}
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-teal-100 flex items-center justify-center mr-4">
@@ -371,10 +370,10 @@ export default function ClientDetailPage() {
             </div>
           </div>
 
-          {/* Right — Stats */}
+          {}
           <div className="space-y-8">
 
-            {/* Credit Limit card */}
+            {}
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-2xl p-6 text-white">
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -415,7 +414,7 @@ export default function ClientDetailPage() {
               )}
             </div>
 
-            {/* Real Quick Stats */}
+            {}
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Stats</h3>
               <div className="space-y-4">
@@ -439,7 +438,7 @@ export default function ClientDetailPage() {
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {}
             <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl shadow-2xl p-6 text-white">
               <h3 className="text-xl font-bold mb-6">Quick Actions</h3>
               <div className="space-y-3">
@@ -476,7 +475,7 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
-        {/* Recent Invoices — real data */}
+        {}
         <div className="mt-12 bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-900">Recent Invoices</h2>

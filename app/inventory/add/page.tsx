@@ -119,7 +119,7 @@ export default function AddProductPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -161,7 +161,7 @@ export default function AddProductPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-8 mb-8">
-              {/* Left Column */}
+              {}
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -249,7 +249,7 @@ export default function AddProductPage() {
                 </div>
               </div>
 
-              {/* Right Column */}
+              {}
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -382,7 +382,7 @@ export default function AddProductPage() {
           </form>
         </div>
 
-        {/* Info Card */}
+        {}
         <div className="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">

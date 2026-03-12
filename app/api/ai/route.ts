@@ -1,9 +1,8 @@
-// app/api/ai/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
 
-// ── Fetch all real business data from the DB ──────────────────────────────────
 async function getBusinessSnapshot() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -48,9 +47,6 @@ async function getBusinessSnapshot() {
     }),
   ]);
 
-  // ── Derive key metrics ──────────────────────────────────────────────────────
-
-  // Product sales volumes (from invoice items on PAID/PENDING invoices)
   const productSales: Record<string, { name: string; unitsSold: number; revenue: number; recentUnits: number }> = {};
   for (const inv of invoices) {
     for (const item of inv.items) {
@@ -67,7 +63,6 @@ async function getBusinessSnapshot() {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
 
-  // Client stats
   const clientStats = clients.map(c => {
     const paid = c.invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
     const unpaid = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s, i) => s + i.total, 0);
@@ -82,27 +77,23 @@ async function getBusinessSnapshot() {
     };
   }).sort((a, b) => b.totalPaid - a.totalPaid);
 
-  // Revenue
   const totalRevenue = invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
   const monthRevenue = invoices.filter(i => i.status === 'PAID' && new Date(i.invoiceDate) >= thirtyDaysAgo).reduce((s, i) => s + i.total, 0);
   const pendingValue = invoices.filter(i => i.status === 'PENDING').reduce((s, i) => s + i.total, 0);
   const overdueValue = invoices.filter(i => i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
-  // Expiry risk
   const expiryRisk = products.map(p => {
     const daysLeft = Math.ceil((new Date(p.expiryDate).getTime() - now.getTime()) / 86400000);
     const stockValue = p.price * p.currentStock;
     return { name: p.name, daysLeft, currentStock: p.currentStock, stockValue, minStock: p.minStock, reorderLevel: p.reorderLevel };
   }).filter(p => p.daysLeft <= 180).sort((a, b) => a.daysLeft - b.daysLeft);
 
-  // Low stock
   const lowStock = products
     .filter(p => p.currentStock <= p.reorderLevel)
     .map(p => ({ name: p.name, currentStock: p.currentStock, minStock: p.minStock, reorderLevel: p.reorderLevel, price: p.price }))
     .sort((a, b) => a.currentStock - b.currentStock);
 
-  // Inactive clients (no orders in 60+ days)
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
   const inactiveClients = clients
     .filter(c => {
@@ -132,7 +123,6 @@ async function getBusinessSnapshot() {
   };
 }
 
-// ── Call Groq AI ─────────────────────────────────────────────────────────────
 async function callCloudflareAI(systemPrompt: string, userMessage: string): Promise<string> {
   if (!process.env.GROQ_API_KEY) {
     throw new Error('GROQ_API_KEY not set in .env');
@@ -192,7 +182,6 @@ Be concise, practical, and direct. Speak like a trusted advisor, not a report ge
 
     let aiResponse = '';
 
-    // ── 1. Dashboard insights ─────────────────────────────────────────────────
     if (type === 'insights') {
       console.log('📊 Generating insights...');
       aiResponse = await callCloudflareAI(BASE_SYSTEM, `
@@ -225,7 +214,6 @@ Give me 4 to 6 sharp, specific business insights and action recommendations base
 Focus on the most important things that need attention right now. Be specific with numbers.`);
     }
 
-    // ── 2. Inventory analysis ─────────────────────────────────────────────────
     else if (type === 'inventory') {
       console.log('📊 Generating inventory analysis...');
       aiResponse = await callCloudflareAI(BASE_SYSTEM, `
@@ -243,7 +231,6 @@ ${data.topProducts.slice(0, 5).map(p => `- ${p.name}: ${p.recentUnits} units sol
 Give a clear inventory action plan. Which products need urgent restocking? Which near-expiry products should be discounted or prioritised for sale? What is the total value at risk from expiring stock?`);
     }
 
-    // ── 3. Client risk analysis ───────────────────────────────────────────────
     else if (type === 'clients') {
       console.log('📊 Generating client analysis...');
       const highRisk = data.clientStats.filter(c => c.creditUtilization > 80 || c.overdueCount > 0);
@@ -267,7 +254,6 @@ ${data.inactiveClients.length === 0 ? 'None' : data.inactiveClients.map(c => `- 
 Provide: (1) which high-risk clients need immediate action and what action, (2) which inactive clients are worth re-engaging and how, (3) which top clients could be upsold or given loyalty benefits.`);
     }
 
-    // ── 4. Financial analysis ─────────────────────────────────────────────────
     else if (type === 'financial') {
       console.log('📊 Generating financial analysis...');
       aiResponse = await callCloudflareAI(BASE_SYSTEM, `
@@ -291,7 +277,6 @@ ${data.recentExpenses.slice(0, 8).map(e => `- ${e.description} (${e.category}): 
 Analyse the financial health. Is the profit margin healthy for a pharmaceutical distributor? What is the overdue collection risk? Are there expense patterns worth noting? What should management focus on to improve profitability?`);
     }
 
-    // ── 5. Natural language chat ──────────────────────────────────────────────
     else if (type === 'chat' && query) {
       console.log('💬 Processing chat query...');
       aiResponse = await callCloudflareAI(

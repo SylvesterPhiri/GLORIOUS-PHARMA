@@ -1,4 +1,4 @@
-// app/api/invoices/[id]/payments/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -15,7 +15,6 @@ export async function GET(
 
     const { id } = params;
 
-    // Check if invoice exists
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       select: { 
@@ -38,11 +37,9 @@ export async function GET(
       orderBy: { paymentDate: 'desc' }
     });
 
-    // Calculate payment summary
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const remainingBalance = Math.max(invoice.total - totalPaid, 0);
 
-    // Group payments by method
     const byMethod = payments.reduce((acc: Record<string, number>, p) => {
       acc[p.method] = (acc[p.method] || 0) + p.amount;
       return acc;
@@ -86,7 +83,6 @@ export async function POST(
     const body = await request.json();
     const { amount, method, chequeNumber, bankName, paymentDate, notes } = body;
 
-    // Validation
     if (!amount || amount <= 0) {
       return NextResponse.json(
         { error: 'Valid amount is required' },
@@ -94,7 +90,6 @@ export async function POST(
       );
     }
 
-    // Check if invoice exists
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: { payments: true }
@@ -107,7 +102,6 @@ export async function POST(
       );
     }
 
-    // Create payment
     const payment = await prisma.payment.create({
       data: {
         invoiceId: id,
@@ -120,14 +114,12 @@ export async function POST(
       }
     });
 
-    // Calculate total paid so far
     const allPayments = await prisma.payment.findMany({
       where: { invoiceId: id }
     });
 
     const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
 
-    // If total paid equals or exceeds invoice total, update invoice status to PAID
     let updatedInvoice = null;
     if (totalPaid >= invoice.total && invoice.status !== 'PAID') {
       updatedInvoice = await prisma.invoice.update({
@@ -136,7 +128,6 @@ export async function POST(
       });
     }
 
-    // Log audit
     await prisma.auditLog.create({
       data: {
         action: 'PAYMENT_CREATED',

@@ -1,4 +1,4 @@
-// app/api/products/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -82,7 +82,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       include: { manufacturer: { select: { id: true, name: true, motherCompany: true } } },
     });
 
-    // Track what changed
     const changes: Record<string, { from: any; to: any }> = {};
     const trackFields = ['name', 'price', 'currentStock', 'minStock', 'batchNumber', 'type', 'category'] as const;
     for (const f of trackFields) {
@@ -91,7 +90,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Check if this is a stock adjustment specifically
     const isStockAdjustment = changes.currentStock !== undefined;
     await logAudit({
       action:      isStockAdjustment ? 'STOCK_ADJUSTED' : 'PRODUCT_UPDATED',

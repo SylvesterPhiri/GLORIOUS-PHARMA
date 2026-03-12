@@ -1,5 +1,5 @@
-// app/api/settings/backup/route.ts
-// Downloads the SQLite database file as a backup
+
+
 import { NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';

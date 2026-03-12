@@ -1,4 +1,4 @@
-// app/audit/page.tsx
+
 'use client';
 import { useState, useEffect } from 'react';
 
@@ -14,29 +14,29 @@ interface AuditLog {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  // Auth
+
   AUTH_LOGIN:          'bg-green-100 text-green-800',
   AUTH_LOGIN_FAILED:   'bg-red-100 text-red-800',
   AUTH_LOGOUT:         'bg-gray-100 text-gray-700',
-  // Invoices
+
   INVOICE_CREATED:             'bg-blue-100 text-blue-800',
   INVOICE_PAID:                'bg-emerald-100 text-emerald-800',
   INVOICE_DELETED:             'bg-red-100 text-red-800',
   HISTORICAL_INVOICE_IMPORTED: 'bg-amber-100 text-amber-800',
-  // Clients
+
   CLIENT_CREATED: 'bg-indigo-100 text-indigo-800',
   CLIENT_UPDATED: 'bg-yellow-100 text-yellow-800',
   CLIENT_DELETED: 'bg-red-100 text-red-800',
-  // Products
+
   PRODUCT_CREATED: 'bg-teal-100 text-teal-800',
   PRODUCT_UPDATED: 'bg-yellow-100 text-yellow-800',
   PRODUCT_DELETED: 'bg-red-100 text-red-800',
   STOCK_ADJUSTED:  'bg-orange-100 text-orange-800',
-  // Users
+
   USER_CREATED:      'bg-violet-100 text-violet-800',
   USER_UPDATED:      'bg-yellow-100 text-yellow-800',
   USER_DEACTIVATED:  'bg-red-100 text-red-800',
-  // Returns / Expenses / Manufacturers
+
   RETURN_PROCESSED:        'bg-orange-100 text-orange-800',
   EXPENSE_CREATED:         'bg-pink-100 text-pink-800',
   EXPENSE_DELETED:         'bg-red-100 text-red-800',
@@ -116,7 +116,7 @@ export default function AuditPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
+        {}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
             Audit Log
@@ -124,7 +124,7 @@ export default function AuditPage() {
           <p className="text-gray-600 mt-2">Complete history of every action taken in the system — including who did it.</p>
         </div>
 
-        {/* Stats bar */}
+        {}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Total Events',  value: pagination.total, color: 'border-blue-500'  },
@@ -139,7 +139,7 @@ export default function AuditPage() {
           ))}
         </div>
 
-        {/* Filters */}
+        {}
         <div className="bg-white rounded-2xl shadow p-5 mb-6">
           <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -180,7 +180,7 @@ export default function AuditPage() {
           </form>
         </div>
 
-        {/* Log entries */}
+        {}
         <div className="space-y-3">
           {loading ? (
             <div className="bg-white rounded-2xl shadow p-12 text-center">
@@ -204,15 +204,15 @@ export default function AuditPage() {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
 
-                    {/* Left: icon + main info */}
+                    {}
                     <div className="flex items-start gap-4 flex-1 min-w-0">
-                      {/* Entity icon */}
+                      {}
                       <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl flex-shrink-0">
                         {ENTITY_ICONS[log.entityType] ?? '📝'}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        {/* Action badge + entity type */}
+                        {}
                         <div className="flex flex-wrap items-center gap-2 mb-1">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${ACTION_COLORS[log.action] ?? 'bg-gray-100 text-gray-700'}`}>
                             {formatAction(log.action)}
@@ -223,16 +223,16 @@ export default function AuditPage() {
                           )}
                         </div>
 
-                        {/* Description */}
+                        {}
                         <p className="text-sm text-gray-700 font-medium leading-snug">
                           {log.description ?? '—'}
                         </p>
 
-                        {/* ── WHO DID IT ── */}
+                        {}
                         <div className="flex flex-wrap items-center gap-3 mt-2">
                           {log.user ? (
                             <div className="flex items-center gap-2">
-                              {/* Avatar initials */}
+                              {}
                               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                 {log.user.name.charAt(0).toUpperCase()}
                               </div>
@@ -255,7 +255,7 @@ export default function AuditPage() {
                       </div>
                     </div>
 
-                    {/* Right: timestamp + expand */}
+                    {}
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
                       <span className="text-xs text-gray-400 whitespace-nowrap">{formatTimestamp(log.createdAt)}</span>
                       {hasDetails && (
@@ -268,12 +268,12 @@ export default function AuditPage() {
                   </div>
                 </div>
 
-                {/* Expanded detail panel */}
+                {}
                 {expanded && hasDetails && (
                   <div className="border-t border-gray-100 px-5 py-4 bg-gray-50 rounded-b-2xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
 
-                      {/* Changes diff */}
+                      {}
                       {changes && Object.keys(changes).length > 0 && (
                         <div className="md:col-span-2">
                           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 font-sans">Changes</p>
@@ -290,7 +290,7 @@ export default function AuditPage() {
                         </div>
                       )}
 
-                      {/* Old data */}
+                      {}
                       {oldData && !changes && (
                         <div>
                           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 font-sans">Before</p>
@@ -300,7 +300,7 @@ export default function AuditPage() {
                         </div>
                       )}
 
-                      {/* New data */}
+                      {}
                       {newData && (
                         <div>
                           <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 font-sans">
@@ -319,7 +319,7 @@ export default function AuditPage() {
           })}
         </div>
 
-        {/* Pagination */}
+        {}
         {pagination.pages > 1 && (
           <div className="mt-6 flex justify-between items-center">
             <span className="text-sm text-gray-500">

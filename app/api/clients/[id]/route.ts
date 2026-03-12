@@ -1,4 +1,4 @@
-// app/api/clients/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -63,7 +63,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       },
     });
 
-    // Build changes object — only fields that actually changed
     const changes: Record<string, { from: any; to: any }> = {};
     const fields = ['name', 'email', 'phone', 'address', 'company', 'type', 'creditLimit'] as const;
     for (const f of fields) {

@@ -1,4 +1,4 @@
-// app/api/settings/danger/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'reset_data') {
-      // Delete in correct order to avoid FK constraint errors
+
       await prisma.auditLog.deleteMany({});
       await prisma.return.deleteMany({});
       await prisma.payment.deleteMany({});

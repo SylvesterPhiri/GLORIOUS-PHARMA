@@ -1,4 +1,4 @@
-// app/api/settings/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
     const body    = await request.json();
 
-    // Capture old values for audit
     const oldRows   = await prisma.setting.findMany();
     const oldValues: Record<string, string> = { ...DEFAULTS };
     for (const row of oldRows) oldValues[row.key] = row.value;

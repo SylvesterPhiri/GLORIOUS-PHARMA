@@ -1,7 +1,6 @@
-﻿// lib/api.ts
+
 const API_BASE = '/api'
 
-// Client interface
 export interface Client {
   id: string;
   name: string;
@@ -15,7 +14,6 @@ export interface Client {
   updatedAt: string;
 }
 
-// Fetch all clients
 export async function fetchClients(search = '', type = 'all'): Promise<Client[]> {
   try {
     const params = new URLSearchParams()
@@ -35,7 +33,6 @@ export async function fetchClients(search = '', type = 'all'): Promise<Client[]>
   }
 }
 
-// Fetch single client
 export async function fetchClient(id: string): Promise<Client> {
   try {
     const response = await fetch(`${API_BASE}/clients/${id}`)
@@ -54,7 +51,6 @@ export async function fetchClient(id: string): Promise<Client> {
   }
 }
 
-// Create new client
 export async function createClient(clientData: {
   name: string;
   email?: string;
@@ -85,7 +81,6 @@ export async function createClient(clientData: {
   }
 }
 
-// Update client
 export async function updateClient(id: string, clientData: {
   name?: string;
   email?: string;
@@ -116,7 +111,6 @@ export async function updateClient(id: string, clientData: {
   }
 }
 
-// Delete client
 export async function deleteClient(id: string): Promise<{ success: boolean }> {
   try {
     const response = await fetch(`${API_BASE}/clients/${id}`, {
@@ -135,7 +129,6 @@ export async function deleteClient(id: string): Promise<{ success: boolean }> {
   }
 }
 
-// Search clients for invoices (autocomplete)
 export async function searchClients(query: string): Promise<Client[]> {
   try {
     const response = await fetch(`${API_BASE}/clients?search=${encodeURIComponent(query)}&limit=10`)
@@ -151,10 +144,6 @@ export async function searchClients(query: string): Promise<Client[]> {
   }
 }
 
-
-
-
-// Manufacturer interface
 export interface Manufacturer {
   id: string;
   name: string;
@@ -168,7 +157,6 @@ export interface Manufacturer {
   updatedAt: string;
 }
 
-// Fetch all manufacturers
 export async function fetchManufacturers(search = ''): Promise<Manufacturer[]> {
   try {
     const params = new URLSearchParams()
@@ -187,7 +175,6 @@ export async function fetchManufacturers(search = ''): Promise<Manufacturer[]> {
   }
 }
 
-// Fetch single manufacturer
 export async function fetchManufacturer(id: string): Promise<Manufacturer> {
   try {
     const response = await fetch(`${API_BASE}/manufacturers/${id}`)
@@ -206,7 +193,6 @@ export async function fetchManufacturer(id: string): Promise<Manufacturer> {
   }
 }
 
-// Create new manufacturer
 export async function createManufacturer(manufacturerData: {
   name: string;
   contactPerson?: string;
@@ -237,7 +223,6 @@ export async function createManufacturer(manufacturerData: {
   }
 }
 
-// Update manufacturer
 export async function updateManufacturer(id: string, manufacturerData: {
   name?: string;
   contactPerson?: string;
@@ -268,7 +253,6 @@ export async function updateManufacturer(id: string, manufacturerData: {
   }
 }
 
-// Delete manufacturer
 export async function deleteManufacturer(id: string): Promise<{ success: boolean }> {
   try {
     const response = await fetch(`${API_BASE}/manufacturers/${id}`, {
@@ -287,7 +271,6 @@ export async function deleteManufacturer(id: string): Promise<{ success: boolean
   }
 }
 
-// Search manufacturers for products
 export async function searchManufacturers(query: string): Promise<Manufacturer[]> {
   try {
     const response = await fetch(`${API_BASE}/manufacturers?search=${encodeURIComponent(query)}&limit=10`)

@@ -172,7 +172,7 @@ export default function CreateInvoicePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -226,7 +226,7 @@ export default function CreateInvoicePage() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <form onSubmit={handleSubmit}>
-                {/* Basic Info */}
+                {}
                 <div className="grid grid-cols-2 gap-6 mb-8">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -354,7 +354,7 @@ export default function CreateInvoicePage() {
                   </div>
                 </div>
 
-                {/* Items */}
+                {}
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-bold text-gray-900">Invoice Items</h2>
@@ -479,7 +479,7 @@ export default function CreateInvoicePage() {
             </div>
           </div>
 
-          {/* Summary sidebar */}
+          {}
           <div>
             <div className="bg-white rounded-2xl shadow-2xl p-6 sticky top-6">
               <div className="flex items-center mb-6">

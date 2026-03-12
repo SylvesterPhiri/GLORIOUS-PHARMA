@@ -1,4 +1,4 @@
-// app/api/auth/logout/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { clearSessionCookie, getSession } from '@/src/lib/auth';
 import { prisma } from '@/src/lib/prisma';

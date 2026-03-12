@@ -76,14 +76,13 @@ export default function AnalysisPage() {
     return true;
   });
 
-  // Monthly revenue (last 6 months)
   const monthlyData = (() => {
     const map: Record<string, number> = {};
     filtered.filter((i) => !i.isHistorical && i.status === 'PAID').forEach((inv) => {
       const key = new Date(inv.invoiceDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       map[key] = (map[key] ?? 0) + inv.total;
     });
-    // Sort by date
+
     const sorted = Object.entries(map)
       .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
       .slice(-6);
@@ -91,7 +90,6 @@ export default function AnalysisPage() {
   })();
   const maxRevenue = Math.max(...monthlyData.map((d) => d.revenue), 1);
 
-  // Top products
   const topProducts = (() => {
     const map: Record<string, { name: string; revenue: number; qty: number }> = {};
     filtered.forEach((inv) => {
@@ -106,7 +104,6 @@ export default function AnalysisPage() {
   })();
   const maxProdRevenue = Math.max(...topProducts.map((p) => p.revenue), 1);
 
-  // Top clients
   const topClients = (() => {
     const map: Record<string, { name: string; spend: number; invoices: number }> = {};
     filtered.filter((i) => !i.isHistorical && i.status === 'PAID').forEach((inv) => {
@@ -119,7 +116,6 @@ export default function AnalysisPage() {
   })();
   const maxClientSpend = Math.max(...topClients.map((c) => c.spend), 1);
 
-  // Inventory
   const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const lowStock = products.filter((p) => p.currentStock <= p.minStock);
   const expiring = products.filter((p) => p.expiryDate && new Date(p.expiryDate) <= in30Days);
@@ -136,7 +132,7 @@ export default function AnalysisPage() {
 
   return (
     <div className="p-6">
-      {/* Header */}
+      {}
       <div className="mb-8 flex justify-between items-start">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">Analysis & Reports</h1>
@@ -156,7 +152,7 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Total Revenue',     value: fmt(stats?.totalRevenue ?? 0),         color: 'border-green-500',  bg: 'bg-green-50'  },
@@ -171,7 +167,7 @@ export default function AnalysisPage() {
         ))}
       </div>
 
-      {/* Date filter */}
+      {}
       <div className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap items-center gap-4">
         <span className="text-sm font-medium text-gray-700">Date range:</span>
         <div className="flex items-center gap-2">
@@ -192,7 +188,7 @@ export default function AnalysisPage() {
         )}
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="flex border-b border-gray-200 overflow-x-auto">
           {TABS.map((tab) => (
@@ -207,10 +203,10 @@ export default function AnalysisPage() {
 
         <div className="p-6">
 
-          {/* ── SALES & REVENUE ── */}
+          {}
           {activeTab === 'sales' && (
             <div className="space-y-6">
-              {/* Invoice summary */}
+              {}
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { label: 'Paid Invoices',    value: stats?.paidInvoices    ?? 0, color: 'text-green-600'  },
@@ -224,7 +220,7 @@ export default function AnalysisPage() {
                 ))}
               </div>
 
-              {/* Monthly chart */}
+              {}
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-4">Monthly Revenue (Last 6 Months)</h3>
                 {monthlyData.length === 0 ? (
@@ -250,7 +246,7 @@ export default function AnalysisPage() {
                 )}
               </div>
 
-              {/* Recent invoices table */}
+              {}
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Recent Invoices</h3>
                 <div className="overflow-x-auto">
@@ -289,7 +285,7 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* ── INVENTORY HEALTH ── */}
+          {}
           {activeTab === 'inventory' && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -385,7 +381,7 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* ── TOP PRODUCTS ── */}
+          {}
           {activeTab === 'products' && (
             <div>
               <h3 className="text-base font-semibold text-gray-900 mb-4">Top Products by Revenue</h3>
@@ -419,7 +415,7 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* ── TOP CLIENTS ── */}
+          {}
           {activeTab === 'clients' && (
             <div>
               <h3 className="text-base font-semibold text-gray-900 mb-4">Top Clients by Spend</h3>
@@ -450,12 +446,12 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* ── REPORTS ── */}
+          {}
           {activeTab === 'reports' && (
             <div className="space-y-6">
               <h3 className="text-base font-semibold text-gray-900">Summary Report</h3>
 
-              {/* Revenue summary */}
+              {}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 rounded-lg p-5">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3">Revenue Breakdown</h4>
@@ -497,7 +493,7 @@ export default function AnalysisPage() {
                 </div>
               </div>
 
-              {/* Inventory summary */}
+              {}
               <div className="bg-gray-50 rounded-lg p-5">
                 <h4 className="text-sm font-semibold text-gray-700 mb-3">Inventory Summary</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -515,7 +511,7 @@ export default function AnalysisPage() {
                 </div>
               </div>
 
-              {/* Export hint */}
+              {}
               <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
                 💡 To export data, use your browser's print function (Ctrl+P / Cmd+P) and save as PDF.
               </div>

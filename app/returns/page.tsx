@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface ReturnRecord {
   id:         string;
   invoiceId:  string;
@@ -21,8 +19,6 @@ interface ReturnStats {
   totalValue:  number;
   thisMonth:   number;
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ReturnsPage() {
   const [returns,  setReturns]  = useState<ReturnRecord[]>([]);
@@ -69,7 +65,7 @@ export default function ReturnsPage() {
 
   return (
     <div className="p-6">
-      {/* Header */}
+      {}
       <div className="mb-8 flex justify-between items-start">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">Returns</h1>
@@ -91,7 +87,7 @@ export default function ReturnsPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Total Returns',       value: String(stats.total),                                                                           color: 'border-orange-500' },
@@ -105,7 +101,7 @@ export default function ReturnsPage() {
         ))}
       </div>
 
-      {/* Info banner */}
+      {}
       <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800">
         <strong>How returns work:</strong> Returns are processed from individual invoices.
         Go to an invoice and click <em>Return</em> to process a return for specific items.
@@ -116,7 +112,7 @@ export default function ReturnsPage() {
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>
       )}
 
-      {/* Search */}
+      {}
       <div className="mb-4">
         <input
           type="text"
@@ -127,7 +123,7 @@ export default function ReturnsPage() {
         />
       </div>
 
-      {/* Table */}
+      {}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">

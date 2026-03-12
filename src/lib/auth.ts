@@ -1,4 +1,4 @@
-// src/lib/auth.ts
+
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
@@ -73,9 +73,6 @@ export async function clearSessionCookie(): Promise<void> {
   store.set(COOKIE_NAME, '', { httpOnly: true, maxAge: 0, path: '/' });
 }
 
-// ── Permission helpers ────────────────────────────────────────────────────────
-
-/** Check if a session has a specific permission. SUPER_ADMIN always passes. */
 export function hasPermission(session: SessionUser, permission: string): boolean {
   if (session.role === 'SUPER_ADMIN') return true;
   return session.permissions.includes(permission);

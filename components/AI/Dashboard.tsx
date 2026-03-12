@@ -1,4 +1,4 @@
-// components/AI/Dashboard.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,7 +38,7 @@ export default function AIDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* AI Insights Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold gradient-text">AI-Powered Insights</h2>
@@ -50,7 +50,7 @@ export default function AIDashboard() {
         </div>
       </div>
 
-      {/* Top Products */}
+      {}
       <div className="card p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
@@ -80,7 +80,7 @@ export default function AIDashboard() {
         </div>
       </div>
 
-      {/* AI Recommendations */}
+      {}
       <div className="card p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

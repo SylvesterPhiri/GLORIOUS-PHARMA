@@ -63,7 +63,6 @@ const ROLE_COLORS: Record<string, string> = {
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
-  // ── My Profile ────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState({ name: '', email: '', currentPassword: '', newPassword: '', confirmPassword: '' });
   const [profileLoading,  setProfileLoading]  = useState(true);
   const [profileSaving,   setProfileSaving]   = useState(false);
@@ -72,7 +71,6 @@ export default function SettingsPage() {
   const [currentUserId,   setCurrentUserId]   = useState('');
   const [currentUserRole, setCurrentUserRole] = useState('');
 
-  // ── General settings ──────────────────────────────────────────────────────
   const [settings, setSettings] = useState<SystemSettings>({
     companyName: 'GloriousPharma', currency: 'ZMW', taxRate: '0',
     invoicePrefix: 'INV', lowStockDefault: '10', timezone: 'Africa/Lusaka', logoUrl: '',
@@ -85,7 +83,6 @@ export default function SettingsPage() {
   const [logoError,       setLogoError]       = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Users ─────────────────────────────────────────────────────────────────
   const [users,           setUsers]           = useState<User[]>([]);
   const [usersLoading,    setUsersLoading]    = useState(false);
   const [showUserForm,    setShowUserForm]    = useState(false);
@@ -99,7 +96,6 @@ export default function SettingsPage() {
   const [userFormLoading, setUserFormLoading] = useState(false);
   const [deleteConfirm,   setDeleteConfirm]   = useState<User | null>(null);
 
-  // ── Danger zone ───────────────────────────────────────────────────────────
   const [dangerConfirm, setDangerConfirm] = useState<'audit' | 'reset' | null>(null);
   const [dangerLoading, setDangerLoading] = useState(false);
   const [dangerMessage, setDangerMessage] = useState('');
@@ -295,14 +291,14 @@ export default function SettingsPage() {
 
         <div className="p-6">
 
-          {/* ── MY PROFILE ── */}
+          {}
           {activeTab === 'profile' && (
             <div className="max-w-lg space-y-8">
               {profileLoading ? (
                 <div className="text-center py-8"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"/></div>
               ) : (
                 <>
-                  {/* Avatar card */}
+                  {}
                   <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg flex-shrink-0">
                       {profile.name.charAt(0).toUpperCase() || '?'}
@@ -316,7 +312,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Account info */}
+                  {}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Account Information</h3>
                     <div>
@@ -331,7 +327,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Change password */}
+                  {}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
                       Change Password <span className="text-gray-400 font-normal text-xs">(leave blank to keep current)</span>
@@ -365,7 +361,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* ── GENERAL ── */}
+          {}
           {activeTab === 'general' && (
             <div className="max-w-xl space-y-6">
               {settingsLoading ? (
@@ -379,57 +375,7 @@ export default function SettingsPage() {
                         {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-2xl text-gray-300">🏥</span>}
                       </div>
                       <div>
-                        <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                        <button onClick={() => logoInputRef.current?.click()} disabled={logoUploading}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:bg-blue-300">
-                          {logoUploading ? 'Uploading...' : 'Upload Logo'}
-                        </button>
-                        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 2MB</p>
-                        {logoError && <p className="text-xs text-red-600 mt-1">{logoError}</p>}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900">System Configuration</h3>
-                    {[
-                      { key: 'companyName',     label: 'Company Name',          type: 'text'   },
-                      { key: 'currency',        label: 'Currency Code',         type: 'text'   },
-                      { key: 'taxRate',         label: 'Default Tax Rate (%)',  type: 'number' },
-                      { key: 'invoicePrefix',   label: 'Invoice Number Prefix', type: 'text'   },
-                      { key: 'lowStockDefault', label: 'Default Min Stock',     type: 'number' },
-                    ].map(({ key, label, type }) => (
-                      <div key={key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-                        <input type={type} value={(settings as any)[key]} onChange={(e) => setSettings(p => ({ ...p, [key]: e.target.value }))}
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                      </div>
-                    ))}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-                      <select value={settings.timezone} onChange={(e) => setSettings(p => ({ ...p, timezone: e.target.value }))}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="Africa/Lusaka">Africa/Lusaka</option>
-                        <option value="Africa/Harare">Africa/Harare</option>
-                        <option value="Africa/Johannesburg">Africa/Johannesburg</option>
-                        <option value="Africa/Nairobi">Africa/Nairobi</option>
-                        <option value="UTC">UTC</option>
-                      </select>
-                    </div>
-                  </div>
-                  {settingsError && <p className="text-sm text-red-600">{settingsError}</p>}
-                  <div className="flex items-center gap-3 pt-2">
-                    <button onClick={handleSaveSettings} disabled={savingSettings}
-                      className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 text-sm">
-                      {savingSettings ? 'Saving...' : 'Save Settings'}
-                    </button>
-                    {settingsSaved && <span className="text-sm text-green-600 font-medium">✓ Saved successfully</span>}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ── USERS ── */}
+                        <input ref={logoInputRef} type="file" accept="image}
           {activeTab === 'users' && (
             <div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -504,7 +450,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* ── DANGER ZONE ── */}
+          {}
           {activeTab === 'danger' && (
             <div className="space-y-4 max-w-xl">
               <div className="p-5 bg-blue-50 border border-blue-200 rounded-lg">
@@ -551,7 +497,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* ── User Form Modal ── */}
+      {}
       {showUserForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
@@ -599,7 +545,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ── Permissions Modal ── */}
+      {}
       {showPerms && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
@@ -634,7 +580,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ── Deactivate Confirm ── */}
+      {}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">

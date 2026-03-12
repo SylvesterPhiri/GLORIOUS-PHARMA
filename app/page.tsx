@@ -1,11 +1,9 @@
-// app/page.tsx
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DashboardStats {
   totalClients: number;
@@ -26,8 +24,6 @@ interface SystemSettings {
   companyName: string; currency: string; taxRate: string;
   invoicePrefix: string; lowStockDefault: string; timezone: string; logoUrl: string;
 }
-
-// ─── Nav config ───────────────────────────────────────────────────────────────
 
 const NAV_SECTIONS = [
   {
@@ -71,8 +67,6 @@ const ROLE_COLORS: Record<string, string> = {
   ACCOUNTANT:  'from-yellow-500 to-orange-500',
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function Home() {
   const router = useRouter();
   const [stats,        setStats]        = useState<DashboardStats | null>(null);
@@ -84,11 +78,9 @@ export default function Home() {
   const [loggingOut,   setLoggingOut]   = useState(false);
   const [settings,     setSettings]     = useState<SystemSettings | null>(null);
 
-  // Add ref to track all img elements
   useEffect(() => {
     console.log('🔍 Dashboard mounted, checking for /dashboard requests...');
-    
-    // Check all img tags
+
     const images = document.getElementsByTagName('img');
     for (let img of images) {
       if (img.src.includes('/dashboard')) {
@@ -96,7 +88,6 @@ export default function Home() {
       }
     }
 
-    // Check all link tags
     const links = document.getElementsByTagName('a');
     for (let link of links) {
       if (link.href.includes('/dashboard')) {
@@ -104,7 +95,6 @@ export default function Home() {
       }
     }
 
-    // Monitor DOM for new elements
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -207,7 +197,6 @@ export default function Home() {
   const companyName   = settings?.companyName ?? 'GloriousPharma';
   const logoUrl       = settings?.logoUrl ?? null;
 
-  // Log when logoUrl changes
   useEffect(() => {
     if (logoUrl) {
       console.log('📸 Logo URL loaded:', logoUrl);
@@ -218,10 +207,10 @@ export default function Home() {
     <>
       <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans">
 
-        {/* ── Sidebar ───────────────────────────────────────────────────────── */}
+        {}
         <aside className={`flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-56'}`}>
 
-          {/* Logo */}
+          {}
           <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
             {!collapsed && (
               <div className="flex items-center gap-2">
@@ -271,7 +260,7 @@ export default function Home() {
             </button>
           )}
 
-          {/* Nav */}
+          {}
           <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-5">
             {NAV_SECTIONS.map((section) => (
               <div key={section.label}>
@@ -303,11 +292,11 @@ export default function Home() {
             ))}
           </nav>
 
-          {/* ── Bottom user section ── */}
+          {}
           <div className="border-t border-gray-200">
             {!collapsed ? (
               <div className="p-3 space-y-1">
-                {/* User info */}
+                {}
                 <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-gray-50">
                   <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${userGradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
                     <span className="text-[11px] font-bold text-white">{userInitial}</span>
@@ -317,7 +306,7 @@ export default function Home() {
                     <p className="text-[10px] text-gray-500 truncate capitalize">{roleLabel.toLowerCase()}</p>
                   </div>
                 </div>
-                {/* Logout button */}
+                {}
                 <button
                   onClick={() => setShowLogout(true)}
                   className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-all group"
@@ -327,7 +316,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              /* Collapsed — just show logout icon */
+              
               <button
                 onClick={() => setShowLogout(true)}
                 className="w-full flex items-center justify-center py-3 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
@@ -339,13 +328,13 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* ── Main Content ──────────────────────────────────────────────────── */}
+        {}
         <main className="flex-1 overflow-auto">
 
-          {/* Top bar */}
+          {}
           <header className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 bg-white/80 backdrop-blur border-b border-gray-200">
             <div className="flex items-center gap-3">
-              {/* Show logo in top bar as well */}
+              {}
               {logoUrl && (
                 <img 
                   src={logoUrl} 
@@ -376,7 +365,7 @@ export default function Home() {
                 <PlusIcon className="w-3 h-3" />
                 New Invoice
               </Link>
-              {/* Logout button in topbar too */}
+              {}
               <button
                 onClick={() => setShowLogout(true)}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
@@ -389,7 +378,7 @@ export default function Home() {
 
           <div className="p-8 space-y-8">
 
-            {/* ── Alert bar ──────────────────────────────────────────────── */}
+            {}
             {!loading && stats && (stats.lowStockProducts > 0 || stats.expiringProducts > 0) && (
               <div className="flex flex-wrap gap-3">
                 {stats.lowStockProducts > 0 && (
@@ -409,7 +398,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* ── KPI Stats Grid ─────────────────────────────────────────── */}
+            {}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard label="Total Revenue"     value={loading ? '—' : `K${(stats?.totalRevenue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="From paid invoices"  accent="emerald" icon={<WalletIcon className="w-4 h-4" />} />
               <StatCard label="Active Clients"    value={loading ? '—' : String(stats?.totalClients ?? 0)}   sub="Registered clients"                                          accent="cyan"    icon={<UsersIcon className="w-4 h-4" />} />
@@ -417,7 +406,7 @@ export default function Home() {
               <StatCard label="Products in Stock" value={loading ? '—' : String(stats?.totalProducts ?? 0)}  sub={loading ? '' : `${stats?.lowStockProducts ?? 0} low stock`}   accent="amber"   icon={<BoxIcon className="w-4 h-4" />}    alert={(stats?.lowStockProducts ?? 0) > 0} />
             </div>
 
-            {/* ── Quick Actions + Secondary Stats ────────────────────────── */}
+            {}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-white rounded-2xl shadow-2xl p-6">
                 <h2 className="text-sm font-semibold text-gray-700 mb-4">Quick Actions</h2>
@@ -439,7 +428,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ── All Modules Grid ────────────────────────────────────────── */}
+            {}
             <div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">All Modules</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -456,7 +445,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Getting started */}
+            {}
             {!loading && stats && stats.totalClients === 0 && stats.totalProducts === 0 && (
               <div className="bg-white rounded-2xl shadow-2xl p-8">
                 <h2 className="text-base font-bold text-gray-900 mb-6">Getting Started</h2>
@@ -481,7 +470,7 @@ export default function Home() {
           </div>
         </main>
 
-        {/* ── Logout Confirmation Modal ─────────────────────────────────────── */}
+        {}
         {showLogout && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -532,8 +521,6 @@ export default function Home() {
     </>
   );
 }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub, accent, icon, alert = false }: {
   label: string; value: string; sub: string;
@@ -592,8 +579,6 @@ function ModuleCard({ href, icon, label, desc, accent }: { href: string; icon: R
     </Link>
   );
 }
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function GridIcon({ className = 'w-4 h-4' }) {
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>;

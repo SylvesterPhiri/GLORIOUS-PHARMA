@@ -1,4 +1,4 @@
-// app/api/auth/login/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { setSessionCookie } from '@/src/lib/auth';
@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-    // Parse permissions stored as JSON string in DB, fallback to empty array
     let permissions: string[] = [];
     try {
       permissions = JSON.parse((user as any).permissions ?? '[]');
@@ -63,7 +62,6 @@ export async function POST(request: NextRequest) {
       permissions = [];
     }
 
-    // Store permissions alongside role in session cookie
     await setSessionCookie({
       id:          user.id,
       name:        user.name,

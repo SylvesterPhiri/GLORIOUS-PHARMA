@@ -141,7 +141,7 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -195,7 +195,7 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-6">
-          {/* Left Column - Basic Info */}
+          {}
           <div className="col-span-2 space-y-6">
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <div className="flex items-center mb-6">
@@ -253,7 +253,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Stock Information */}
+            {}
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <div className="flex items-center mb-6">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center mr-4">
@@ -325,7 +325,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Right Column */}
+          {}
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-2xl p-6">
               <div className="flex items-center mb-6">

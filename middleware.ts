@@ -1,10 +1,9 @@
-// middleware.ts  (root of project, next to package.json)
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest, hasPermission } from '@/src/lib/auth';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/me'];
 
-// Maps route prefixes to the permission required to VIEW them
 const ROUTE_PERMISSIONS: { path: string; permission: string }[] = [
   { path: '/inventory',         permission: 'inventory.view'     },
   { path: '/api/inventory',     permission: 'inventory.view'     },
@@ -25,7 +24,6 @@ const ROUTE_PERMISSIONS: { path: string; permission: string }[] = [
   { path: '/api/audit',         permission: 'audit.view'         },
 ];
 
-// Write operations — checked in addition to the base view permission
 const WRITE_PERMISSIONS: { path: string; methods: string[]; permission: string }[] = [
   { path: '/api/inventory',     methods: ['POST', 'PUT', 'DELETE'], permission: 'inventory.edit'     },
   { path: '/api/clients',       methods: ['POST', 'PUT', 'DELETE'], permission: 'clients.edit'       },
@@ -40,7 +38,6 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method       = request.method;
 
-  // Allow public paths and static assets
   if (
     PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
     pathname.startsWith('/_next') ||
@@ -49,7 +46,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Verify session exists
   let session;
   try {
     session = await getSessionFromRequest(request);
@@ -65,12 +61,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // SUPER_ADMIN bypasses all permission checks
   if (session.role === 'SUPER_ADMIN') {
     return NextResponse.next();
   }
 
-  // Check write permissions (POST/PUT/DELETE)
   for (const rule of WRITE_PERMISSIONS) {
     if (pathname.startsWith(rule.path) && rule.methods.includes(method)) {
       if (!hasPermission(session, rule.permission)) {
@@ -85,7 +79,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Check view permissions (GET)
   for (const rule of ROUTE_PERMISSIONS) {
     if (pathname.startsWith(rule.path)) {
       if (!hasPermission(session, rule.permission)) {

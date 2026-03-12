@@ -1,4 +1,4 @@
-// app/api/manufacturers/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { getSession } from '@/src/lib/auth';
@@ -13,7 +13,6 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
     const where: any = {};
 
-    // SQLite: no mode:'insensitive'
     if (search) {
       where.OR = [
         { name:          { contains: search } },

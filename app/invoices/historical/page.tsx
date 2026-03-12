@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface Client {
   id: string;
   name: string;
@@ -19,7 +17,7 @@ interface Product {
 }
 
 interface HistoricalItem {
-  // Toggle: true = pick from existing products, false = type name freely
+
   useExisting:  boolean;
   productId:    string;   // used when useExisting = true
   productName:  string;   // used when useExisting = false (or as display name)
@@ -28,8 +26,6 @@ interface HistoricalItem {
   unitPrice:    number;
   freeSamples:  number;
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ImportHistoricalInvoicePage() {
   const router = useRouter();
@@ -66,13 +62,11 @@ export default function ImportHistoricalInvoicePage() {
 
   const [totals, setTotals] = useState({ subtotal: 0, grandTotal: 0 });
 
-  // ── Fetch clients and products on mount ──────────────────────────────────
   useEffect(() => {
     fetchClients();
     fetchProducts();
   }, []);
 
-  // ── Recalculate totals whenever items change ──────────────────────────────
   useEffect(() => {
     const subtotal = items.reduce((sum, item) => {
       const paid = (parseInt(String(item.quantity)) || 0) - (parseInt(String(item.freeSamples)) || 0);
@@ -103,7 +97,6 @@ export default function ImportHistoricalInvoicePage() {
     }
   };
 
-  // ── Form field handlers ───────────────────────────────────────────────────
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -115,7 +108,7 @@ export default function ImportHistoricalInvoicePage() {
     const updated = [...items];
 
     if (field === 'useExisting') {
-      // Reset the item when toggling mode
+
       updated[index] = {
         ...updated[index],
         useExisting:  value as boolean,
@@ -125,7 +118,7 @@ export default function ImportHistoricalInvoicePage() {
         unitPrice:    0,
       };
     } else if (field === 'productId' && value) {
-      // Auto-fill name and price when selecting an existing product
+
       const product = products.find((p) => p.id === value);
       if (product) {
         updated[index].productId   = product.id;
@@ -164,7 +157,6 @@ export default function ImportHistoricalInvoicePage() {
     }
   };
 
-  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -172,7 +164,7 @@ export default function ImportHistoricalInvoicePage() {
     setSuccess('');
 
     try {
-      // Client-side validation
+
       if (!formData.clientId) throw new Error('Please select a client');
       if (!formData.invoiceDate || !formData.dueDate)
         throw new Error('Invoice date and due date are required');
@@ -192,7 +184,7 @@ export default function ImportHistoricalInvoicePage() {
         status:         formData.status,
         historicalNote: formData.historicalNote || null,
         notes:          formData.notes          || null,
-        // Attach a payment record since historical invoices are usually already paid
+
         payment:
           formData.status === 'PAID'
             ? {
@@ -233,11 +225,10 @@ export default function ImportHistoricalInvoicePage() {
     }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="p-6">
 
-      {/* ── Header ──────────────────────────────────────────────────────── */}
+      {}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-4xl font-bold text-gray-900">Import Historical Invoice</h1>
@@ -262,7 +253,7 @@ export default function ImportHistoricalInvoicePage() {
         </p>
       </div>
 
-      {/* ── Notice banner ───────────────────────────────────────────────── */}
+      {}
       <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg">
         <div className="flex items-start gap-3">
           <svg
@@ -286,7 +277,7 @@ export default function ImportHistoricalInvoicePage() {
         </div>
       </div>
 
-      {/* ── Success / Error ─────────────────────────────────────────────── */}
+      {}
       {success && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
           {success}
@@ -298,14 +289,14 @@ export default function ImportHistoricalInvoicePage() {
         </div>
       )}
 
-      {/* ── Main grid ───────────────────────────────────────────────────── */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ── Form ──────────────────────────────────────────────────────── */}
+        {}
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
 
-            {/* Invoice details */}
+            {}
             <div>
               <h2 className="text-lg font-semibold mb-4">Invoice Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -441,7 +432,7 @@ export default function ImportHistoricalInvoicePage() {
               </div>
             </div>
 
-            {/* Line items */}
+            {}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Products / Line Items</h2>
@@ -458,7 +449,7 @@ export default function ImportHistoricalInvoicePage() {
                 {items.map((item, index) => (
                   <div key={index} className="border border-amber-200 bg-amber-50 rounded-lg p-4">
 
-                    {/* Toggle: free-text vs existing product */}
+                    {}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-gray-700">
                         Item #{index + 1}
@@ -486,7 +477,7 @@ export default function ImportHistoricalInvoicePage() {
 
                     <div className="grid grid-cols-6 gap-3">
 
-                      {/* Product — dropdown or free text */}
+                      {}
                       <div className="col-span-2">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Product *
@@ -520,7 +511,7 @@ export default function ImportHistoricalInvoicePage() {
                         )}
                       </div>
 
-                      {/* SKU — only shown in free-text mode */}
+                      {}
                       {!item.useExisting && (
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -538,7 +529,7 @@ export default function ImportHistoricalInvoicePage() {
                         </div>
                       )}
 
-                      {/* Quantity */}
+                      {}
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Qty *
@@ -555,7 +546,7 @@ export default function ImportHistoricalInvoicePage() {
                         />
                       </div>
 
-                      {/* Unit price */}
+                      {}
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Price (K) *
@@ -573,7 +564,7 @@ export default function ImportHistoricalInvoicePage() {
                         />
                       </div>
 
-                      {/* Free samples */}
+                      {}
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Free
@@ -589,7 +580,7 @@ export default function ImportHistoricalInvoicePage() {
                         />
                       </div>
 
-                      {/* Remove button */}
+                      {}
                       <div className="flex items-end">
                         {items.length > 1 && (
                           <button
@@ -603,7 +594,7 @@ export default function ImportHistoricalInvoicePage() {
                       </div>
                     </div>
 
-                    {/* Line total */}
+                    {}
                     {(item.productName || item.productId) && (
                       <div className="mt-2 text-xs text-gray-500">
                         Line total: K
@@ -622,7 +613,7 @@ export default function ImportHistoricalInvoicePage() {
               </div>
             </div>
 
-            {/* Actions */}
+            {}
             <div className="flex justify-end gap-3 pt-2 border-t">
               <Link
                 href="/invoices"
@@ -642,10 +633,10 @@ export default function ImportHistoricalInvoicePage() {
           </form>
         </div>
 
-        {/* ── Sidebar ───────────────────────────────────────────────────── */}
+        {}
         <div className="space-y-6">
 
-          {/* Totals */}
+          {}
           <div className="bg-white rounded-lg shadow p-6 sticky top-6">
             <h2 className="text-lg font-semibold mb-4">Invoice Summary</h2>
             <div className="space-y-3">
@@ -684,7 +675,7 @@ export default function ImportHistoricalInvoicePage() {
             </div>
           </div>
 
-          {/* What this does / doesn't do */}
+          {}
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="font-semibold mb-3">What gets saved</h3>
             <ul className="space-y-2 text-sm">

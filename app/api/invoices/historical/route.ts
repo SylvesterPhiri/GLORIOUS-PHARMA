@@ -1,4 +1,4 @@
-// app/api/historical-invoices/route.ts  (or wherever this lives)
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { InvoiceStatus } from '@prisma/client';

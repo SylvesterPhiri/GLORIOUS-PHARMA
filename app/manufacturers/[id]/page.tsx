@@ -98,7 +98,7 @@ export default function ManufacturerDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -149,10 +149,10 @@ export default function ManufacturerDetailPage() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           
-          {/* Header with icon */}
+          {}
           <div className="flex items-center mb-8">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 flex items-center justify-center mr-4">
               <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@ export default function ManufacturerDetailPage() {
             <h2 className="text-2xl font-bold text-gray-900">Manufacturer Information</h2>
           </div>
 
-          {/* Details Grid */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-5 rounded-xl">
@@ -269,7 +269,7 @@ export default function ManufacturerDetailPage() {
             )}
           </div>
 
-          {/* Timestamps */}
+          {}
           <div className="mt-8 grid grid-cols-2 gap-4 pt-6 border-t border-gray-200">
             <div className="text-sm text-gray-500">
               Created: {new Date(manufacturer.createdAt).toLocaleDateString()} at {new Date(manufacturer.createdAt).toLocaleTimeString()}

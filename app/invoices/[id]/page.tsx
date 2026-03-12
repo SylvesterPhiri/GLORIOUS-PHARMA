@@ -51,7 +51,6 @@ export default function InvoiceDetailPage() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
 
-  // Mark as paid modal
   const [showPayModal, setShowPayModal] = useState(false);
   const [payForm, setPayForm] = useState({
     amount: '', method: 'CASH', paymentDate: new Date().toISOString().split('T')[0],
@@ -60,7 +59,6 @@ export default function InvoiceDetailPage() {
   const [paying,    setPaying]    = useState(false);
   const [payError,  setPayError]  = useState('');
 
-  // Delete
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting,      setDeleting]      = useState(false);
 
@@ -170,7 +168,7 @@ export default function InvoiceDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
 
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -246,10 +244,10 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        {/* Info Cards Grid */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-          {/* Client info */}
+          {}
           <div className="bg-white rounded-2xl shadow-2xl p-6">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
@@ -265,7 +263,7 @@ export default function InvoiceDetailPage() {
             {invoice.client.address && <p className="text-sm text-gray-400 mt-2">{invoice.client.address}</p>}
           </div>
 
-          {/* Dates */}
+          {}
           <div className="bg-white rounded-2xl shadow-2xl p-6">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
@@ -291,7 +289,7 @@ export default function InvoiceDetailPage() {
             </div>
           </div>
 
-          {/* Totals */}
+          {}
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-2xl p-6 text-white">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
@@ -326,7 +324,7 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        {/* Items table */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-bold text-gray-900">Invoice Items</h3>
@@ -357,7 +355,7 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        {/* Payments */}
+        {}
         {invoice.payments.length > 0 && (
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -388,7 +386,7 @@ export default function InvoiceDetailPage() {
           </div>
         )}
 
-        {/* Returns */}
+        {}
         {invoice.returns.length > 0 && (
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -425,7 +423,7 @@ export default function InvoiceDetailPage() {
           </div>
         )}
 
-        {/* Mark as Paid Modal */}
+        {}
         {showPayModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -548,7 +546,7 @@ export default function InvoiceDetailPage() {
           </div>
         )}
 
-        {/* Delete Confirm Modal */}
+        {}
         {deleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">

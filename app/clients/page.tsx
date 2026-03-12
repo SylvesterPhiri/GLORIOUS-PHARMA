@@ -1,4 +1,4 @@
-﻿// app/clients/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -69,7 +69,6 @@ export default function ClientsPage() {
     COMPANY: 'bg-purple-100 text-purple-800'
   };
 
-  // Calculate stats
   const totalClients = clients.length;
   const totalCredit = clients.reduce((sum, client) => sum + (client.creditLimit || 0), 0);
   const companies = clients.filter(c => c.type === 'COMPANY').length;
@@ -79,7 +78,7 @@ export default function ClientsPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* Header with Dashboard button */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -111,7 +110,7 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-2xl p-6">
             <div className="flex items-center">
@@ -170,7 +169,7 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        {/* Filters */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -205,7 +204,7 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        {/* Error Message */}
+        {}
         {error && (
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-8">
             <div className="flex items-center text-red-700">
@@ -217,7 +216,7 @@ export default function ClientsPage() {
           </div>
         )}
 
-        {/* Clients Table */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900">Client List</h2>
@@ -230,7 +229,7 @@ export default function ClientsPage() {
             </div>
           ) : clients.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="text-6xl mb-4">👥</div>
+              <div className="text-6xl mb-4">??</div>
               <p className="text-gray-500 text-lg mb-4">No clients found. Add your first client!</p>
               <Link
                 href="/clients/add"

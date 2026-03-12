@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface AccountingStats {
   totalRevenue:    number;
   monthlyRevenue:  number;
@@ -39,8 +37,6 @@ interface ClientInvoice {
 
 type Tab = 'overview' | 'statements' | 'expenses';
 
-// ─── PDF Generator ────────────────────────────────────────────────────────────
-
 async function generateStatementPDF(
   invoices: ClientInvoice[],
   clientName: string,
@@ -58,7 +54,6 @@ async function generateStatementPDF(
     .toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })
     .replace(/\//g, '-');
 
-  // ── Try to load company logo ──────────────────────────────────────────────
   let logoDataUrl: string | null = null;
   try {
     const res = await fetch('/api/settings');
@@ -81,9 +76,8 @@ async function generateStatementPDF(
         }
       }
     }
-  } catch (_) { /* proceed without logo */ }
+  } catch (_) {  }
 
-  // ── HEADER ────────────────────────────────────────────────────────────────
   let y = 15;
 
   if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', margin, y, 22, 22);
@@ -103,13 +97,11 @@ async function generateStatementPDF(
 
   y += 33;
 
-  // Green bar
   doc.setFillColor(34, 139, 34);
   doc.rect(margin, y, contentW, 2.5, 'F');
 
   y += 9;
 
-  // Date + optional period range
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
@@ -130,7 +122,6 @@ async function generateStatementPDF(
 
   y += 10;
 
-  // STATEMENT heading with underline
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
@@ -142,7 +133,6 @@ async function generateStatementPDF(
 
   y += 9;
 
-  // CLIENT line
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.text('CLIENT: ', margin, y);
@@ -152,14 +142,12 @@ async function generateStatementPDF(
 
   y += 14;
 
-  // ── INVOICE TABLE ─────────────────────────────────────────────────────────
   const rowH      = 10;
   const colDate   = margin;
   const colInv    = margin + 40;
   const colAmt    = margin + 110;
   const colStatus = margin + 152;
 
-  // Header row
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.3);
   doc.rect(colDate, y, 40, rowH);
@@ -177,7 +165,6 @@ async function generateStatementPDF(
 
   y += rowH;
 
-  // Filter rows by type AND date range
   const rows = invoices.filter((inv) => {
     const matchType = type === 'unpaid' ? inv.status !== 'PAID' : inv.status === 'PAID';
     if (!matchType) return false;
@@ -218,7 +205,6 @@ async function generateStatementPDF(
     y += rowH;
   });
 
-  // Balance / total row
   const balance    = rows.reduce((s, i) => s + i.total, 0);
   const totalLabel = type === 'unpaid' ? 'BALANCE' : 'TOTAL PAID';
   const totalStr   = `ZMW ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -236,7 +222,6 @@ async function generateStatementPDF(
 
   y += rowH + 22;
 
-  // Footer
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
@@ -245,7 +230,6 @@ async function generateStatementPDF(
   doc.setFont('helvetica', 'bold');
   doc.text('SYLVESTER PHIRI', margin + doc.getTextWidth(prepLabel), y);
 
-  // Save with date range in filename if filtered
   const safeName   = clientName.replace(/[^a-z0-9]/gi, '_').toUpperCase();
   const typeLabel  = type === 'unpaid' ? 'UNPAID' : 'PAID';
   const periodPart = (dateFrom || dateTo)
@@ -254,14 +238,11 @@ async function generateStatementPDF(
   doc.save(`${safeName}_${typeLabel}_STATEMENT${periodPart}_${today}.pdf`);
 }
 
-// ─── Page Component ───────────────────────────────────────────────────────────
-
 export default function AccountingPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [stats, setStats]         = useState<AccountingStats | null>(null);
   const [loading, setLoading]     = useState(true);
 
-  // ── Client statement ───────────────────────────────────────────────────────
   const [searchClient, setSearchClient]       = useState('');
   const [clientInvoices, setClientInvoices]   = useState<ClientInvoice[]>([]);
   const [clientSearching, setClientSearching] = useState(false);
@@ -270,7 +251,6 @@ export default function AccountingPage() {
   const [dateFrom, setDateFrom]               = useState('');
   const [dateTo, setDateTo]                   = useState('');
 
-  // ── Expenses ───────────────────────────────────────────────────────────────
   const [expenseForm, setExpenseForm] = useState({
     description: '', amount: '', category: 'Operations',
     date: new Date().toISOString().split('T')[0],
@@ -317,7 +297,6 @@ export default function AccountingPage() {
     }
   };
 
-  // Apply date range to displayed invoices
   const filteredInvoices = clientInvoices.filter((inv) => {
     const d = new Date(inv.invoiceDate);
     if (dateFrom && d < new Date(dateFrom)) return false;
@@ -339,7 +318,6 @@ export default function AccountingPage() {
     }
   };
 
-  // ── Expense CRUD ───────────────────────────────────────────────────────────
   const handleAddExpense = async () => {
     if (!expenseForm.description || !expenseForm.amount) {
       setExpenseError('Description and amount are required.');
@@ -395,7 +373,6 @@ export default function AccountingPage() {
     finally { setDeletingId(null); }
   };
 
-  // ── Derived values ─────────────────────────────────────────────────────────
   const clientName      = clientInvoices[0]?.client?.name ?? searchClient;
   const isFiltered      = !!(dateFrom || dateTo);
   const filteredTotal   = filteredInvoices.reduce((s, i) => s + i.total, 0);
@@ -414,7 +391,7 @@ export default function AccountingPage() {
   return (
     <div className="p-6">
 
-      {/* ── Page Header ── */}
+      {}
       <div className="mb-8 flex justify-between items-start">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">Accounting</h1>
@@ -426,7 +403,7 @@ export default function AccountingPage() {
         </div>
       </div>
 
-      {/* ── KPI Cards ── */}
+      {}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Total Revenue',   value: `K${(stats?.totalRevenue   ?? 0).toFixed(2)}`, color: 'border-blue-500'   },
@@ -441,7 +418,7 @@ export default function AccountingPage() {
         ))}
       </div>
 
-      {/* ── Tabs Container ── */}
+      {}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="flex border-b border-gray-200">
           {TABS.map((tab) => (
@@ -463,7 +440,7 @@ export default function AccountingPage() {
             </div>
           ) : (
             <>
-              {/* ══ OVERVIEW ══════════════════════════════════════════════════ */}
+              {}
               {activeTab === 'overview' && stats && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -512,11 +489,11 @@ export default function AccountingPage() {
                 </div>
               )}
 
-              {/* ══ CLIENT STATEMENTS ═════════════════════════════════════════ */}
+              {}
               {activeTab === 'statements' && (
                 <div className="space-y-5">
 
-                  {/* Search */}
+                  {}
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-3">Search Client</h3>
                     <div className="flex gap-3">
@@ -536,7 +513,7 @@ export default function AccountingPage() {
                     {clientError && <p className="text-red-600 text-sm mt-2">{clientError}</p>}
                   </div>
 
-                  {/* Date range filter — appears after results load */}
+                  {}
                   {clientInvoices.length > 0 && (
                     <div className="flex flex-wrap items-end gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
                       <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -584,7 +561,7 @@ export default function AccountingPage() {
 
                   {filteredInvoices.length > 0 && (
                     <>
-                      {/* Client header + PDF buttons */}
+                      {}
                       <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-gray-100">
                         <div>
                           <h2 className="text-lg font-bold text-gray-900">{clientName}</h2>
@@ -621,7 +598,7 @@ export default function AccountingPage() {
                         </div>
                       </div>
 
-                      {/* Summary totals */}
+                      {}
                       <div className="grid grid-cols-3 gap-3">
                         {[
                           { label: 'Total Invoiced', value: `K${filteredTotal.toFixed(2)}`,   color: 'border-blue-500'   },
@@ -635,7 +612,7 @@ export default function AccountingPage() {
                         ))}
                       </div>
 
-                      {/* Invoice table */}
+                      {}
                       <div className="overflow-x-auto rounded-lg border border-gray-200">
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gray-50">
@@ -670,7 +647,7 @@ export default function AccountingPage() {
                     </>
                   )}
 
-                  {/* Empty state after filter */}
+                  {}
                   {clientInvoices.length > 0 && filteredInvoices.length === 0 && isFiltered && (
                     <div className="text-center py-10 text-gray-400">
                       <p className="text-sm">No invoices in the selected date range.</p>
@@ -683,11 +660,11 @@ export default function AccountingPage() {
                 </div>
               )}
 
-              {/* ══ EXPENSES ══════════════════════════════════════════════════ */}
+              {}
               {activeTab === 'expenses' && (
                 <div className="space-y-6">
 
-                  {/* Add form */}
+                  {}
                   <div className="bg-gray-50 rounded-lg p-5">
                     <h3 className="text-base font-semibold text-gray-900 mb-4">Record New Expense</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -726,7 +703,7 @@ export default function AccountingPage() {
                     </button>
                   </div>
 
-                  {/* Expenses list */}
+                  {}
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-3">Recorded Expenses</h3>
                     {!stats?.expenses?.length ? (
@@ -780,7 +757,7 @@ export default function AccountingPage() {
         </div>
       </div>
 
-      {/* ══ EDIT EXPENSE MODAL ════════════════════════════════════════════════ */}
+      {}
       {editingExpense && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -830,7 +807,7 @@ export default function AccountingPage() {
         </div>
       )}
 
-      {/* ══ DELETE CONFIRM MODAL ══════════════════════════════════════════════ */}
+      {}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -868,8 +845,6 @@ export default function AccountingPage() {
     </div>
   );
 }
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function DownloadIcon() {
   return (

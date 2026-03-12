@@ -1,4 +1,4 @@
-// app/manufacturers/add/page.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -29,8 +29,7 @@ export default function AddManufacturerPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
+
     if (!formData.name.trim()) {
       alert("Manufacturer name is required");
       return;
@@ -39,7 +38,7 @@ export default function AddManufacturerPage() {
     setIsSubmitting(true);
 
     try {
-      // Prepare data for API
+
       const manufacturerData = {
         name: formData.name,
         contactPerson: formData.contactPerson || undefined,
@@ -64,7 +63,7 @@ export default function AddManufacturerPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header with breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -92,12 +91,12 @@ export default function AddManufacturerPage() {
           </div>
         </div>
 
-        {/* Form Card */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               
-              {/* Required Name Field */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Manufacturer Name <span className="text-red-500">*</span>
@@ -115,7 +114,7 @@ export default function AddManufacturerPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Contact Person */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Contact Person <span className="text-gray-400 text-xs">(Optional)</span>
@@ -137,7 +136,7 @@ export default function AddManufacturerPage() {
                   </div>
                 </div>
 
-                {/* Mother Company */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Parent/Mother Company <span className="text-gray-400 text-xs">(Optional)</span>
@@ -161,7 +160,7 @@ export default function AddManufacturerPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Email */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Email Address <span className="text-gray-400 text-xs">(Optional)</span>
@@ -183,7 +182,7 @@ export default function AddManufacturerPage() {
                   </div>
                 </div>
 
-                {/* Phone */}
+                {}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Phone Number <span className="text-gray-400 text-xs">(Optional)</span>
@@ -206,7 +205,7 @@ export default function AddManufacturerPage() {
                 </div>
               </div>
 
-              {/* Location */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Location <span className="text-gray-400 text-xs">(Optional)</span>
@@ -229,7 +228,7 @@ export default function AddManufacturerPage() {
                 </div>
               </div>
 
-              {/* Address */}
+              {}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Address <span className="text-gray-400 text-xs">(Optional)</span>
@@ -252,7 +251,7 @@ export default function AddManufacturerPage() {
                 </div>
               </div>
 
-              {/* Buttons */}
+              {}
               <div className="flex gap-3 pt-6">
                 <button
                   type="submit"
@@ -288,7 +287,7 @@ export default function AddManufacturerPage() {
           </form>
         </div>
 
-        {/* Info Card */}
+        {}
         <div className="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">

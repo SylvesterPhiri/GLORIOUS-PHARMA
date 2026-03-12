@@ -1,16 +1,15 @@
-// lib/ai.ts - AI Features for Pharma Management
+
 import { Client, Product, Invoice } from '@prisma/client'
 
-// Mock AI service - In production, connect to OpenAI, Claude, or Gemini
 export class PharmaAI {
-  // 1. Sales Prediction
+
   static async predictSales(clientId: string, productId: string): Promise<{
     predictedQuantity: number
     confidence: number
     factors: string[]
     recommendation: string
   }> {
-    // Mock AI prediction
+
     return {
       predictedQuantity: Math.floor(Math.random() * 100) + 10,
       confidence: 0.85,
@@ -24,7 +23,6 @@ export class PharmaAI {
     }
   }
 
-  // 2. Inventory Optimization
   static async optimizeInventory(product: Product): Promise<{
     optimalStock: number
     reorderPoint: number
@@ -46,7 +44,6 @@ export class PharmaAI {
     }
   }
 
-  // 3. Client Risk Assessment
   static async assessClientRisk(client: Client & { invoices: Invoice[] }): Promise<{
     riskScore: number // 0-100
     riskLevel: 'low' | 'medium' | 'high'
@@ -99,7 +96,6 @@ export class PharmaAI {
     }
   }
 
-  // 4. Price Optimization
   static async optimizePricing(product: Product, marketData?: any): Promise<{
     currentPrice: number
     suggestedPrice: number
@@ -119,7 +115,6 @@ export class PharmaAI {
     }
   }
 
-  // 5. Expiry Risk Analysis
   static async analyzeExpiryRisk(products: Product[]): Promise<{
     highRisk: Product[]
     mediumRisk: Product[]
@@ -163,14 +158,13 @@ export class PharmaAI {
     }
   }
 
-  // 6. Generate Sales Insights
   static async generateSalesInsights(timeframe: 'daily' | 'weekly' | 'monthly'): Promise<{
     topProducts: { product: string; sales: number; growth: number }[]
     topClients: { client: string; purchases: number; value: number }[]
     trends: string[]
     recommendations: string[]
   }> {
-    // Mock AI insights
+
     return {
       topProducts: [
         { product: 'Paracetamol 500mg', sales: 1500, growth: 12 },
@@ -195,7 +189,6 @@ export class PharmaAI {
     }
   }
 
-  // 7. Chatbot for Customer Support
   static async chat(query: string, context?: any): Promise<{
     response: string
     suggestions: string[]

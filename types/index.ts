@@ -1,4 +1,4 @@
-// Core types matching Prisma schema
+
 
 export enum ClientType {
   INDIVIDUAL = 'INDIVIDUAL',
@@ -30,7 +30,6 @@ export enum PaymentMethod {
   BANK_TRANSFER = 'BANK_TRANSFER'
 }
 
-// Base interface definitions
 export interface Client {
   id: string;
   name: string;
@@ -76,7 +75,6 @@ export interface Product {
   updatedAt: Date;
 }
 
-// Extended types for UI use
 export interface ProductWithManufacturer extends Product {
   manufacturer: {
     id: string;

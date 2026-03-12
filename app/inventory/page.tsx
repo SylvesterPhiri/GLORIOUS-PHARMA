@@ -125,7 +125,7 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header with Dashboard breadcrumb */}
+        {}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-4">
             <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
@@ -168,7 +168,7 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-6 mb-8">
           <form onSubmit={handleSearch}>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Search Products</label>
@@ -202,7 +202,7 @@ export default function InventoryPage() {
           </form>
         </div>
 
-        {/* Products Table */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900">Product List</h2>
