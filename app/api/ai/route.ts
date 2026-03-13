@@ -7,42 +7,62 @@ async function getBusinessSnapshot() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+  const sixtyDaysFromNow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
 
-  const [products, clients, invoices, expenses, returns_] = await Promise.all([
+  const [products, clients, invoices, expenses, returns_, manufacturers] = await Promise.all([
     prisma.product.findMany({
       include: {
-        manufacturer: { select: { name: true } },
-        invoiceItems: { select: { quantity: true, totalPrice: true, invoice: { select: { invoiceDate: true, status: true } } } },
+        manufacturer: true,
+        invoiceItems: {
+          include: {
+            invoice: {
+              select: { invoiceNumber: true, invoiceDate: true, status: true, client: { select: { name: true } } },
+            },
+          },
+        },
       },
+      orderBy: { name: 'asc' },
     }),
     prisma.client.findMany({
       include: {
         invoices: {
-          select: {
-            id: true, invoiceNumber: true, status: true,
-            total: true, dueDate: true, invoiceDate: true,
+          include: {
+            items: {
+              include: { product: { select: { name: true, type: true, category: true } } },
+            },
+            payments: { select: { amount: true, method: true, paymentDate: true } },
           },
+          orderBy: { invoiceDate: 'desc' },
         },
       },
+      orderBy: { name: 'asc' },
     }),
     prisma.invoice.findMany({
       where: { isHistorical: false },
       include: {
-        client: { select: { name: true, type: true } },
+        client: { select: { name: true, type: true, phone: true, email: true, area: true } },
         items: {
           include: {
-            product: { select: { name: true, type: true, category: true } },
+            product: {
+              select: { name: true, type: true, category: true, genericName: true, price: true },
+            },
           },
         },
-        payments: { select: { amount: true, method: true, paymentDate: true } },
+        payments: { select: { amount: true, method: true, paymentDate: true, notes: true } },
       },
       orderBy: { invoiceDate: 'desc' },
     }),
     prisma.expense.findMany({ orderBy: { date: 'desc' } }),
     prisma.return.findMany({
       include: {
-        product: { select: { name: true } },
-        invoice: { select: { invoiceNumber: true } },
+        product: { select: { name: true, type: true, category: true } },
+        invoice: { select: { invoiceNumber: true, client: { select: { name: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.manufacturer.findMany({
+      include: {
+        products: { select: { name: true, currentStock: true, price: true } },
       },
     }),
   ]);
@@ -103,6 +123,73 @@ async function getBusinessSnapshot() {
     })
     .map(c => ({ name: c.name, type: c.type, invoiceCount: c.invoices.length }));
 
+  const allProductDetails = products.map(p => ({
+    name: p.name,
+    genericName: p.genericName,
+    type: p.type,
+    category: p.category,
+    manufacturer: p.manufacturer?.name ?? 'Unknown',
+    currentStock: p.currentStock,
+    initialStock: p.initialStock,
+    minStock: p.minStock,
+    reorderLevel: p.reorderLevel,
+    price: p.price,
+    expiryDate: new Date(p.expiryDate).toLocaleDateString('en-GB'),
+    daysUntilExpiry: Math.ceil((new Date(p.expiryDate).getTime() - now.getTime()) / 86400000),
+    stockValue: p.price * p.currentStock,
+    totalUnitsSold: p.invoiceItems.reduce((s: number, i: any) => s + i.quantity, 0),
+    totalRevenue: p.invoiceItems.reduce((s: number, i: any) => s + i.totalPrice, 0),
+  }));
+
+  const allClientDetails = clients.map(c => {
+    const paid = c.invoices.filter((i: any) => i.status === 'PAID').reduce((s: number, i: any) => s + i.total, 0);
+    const unpaid = c.invoices.filter((i: any) => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s: number, i: any) => s + i.total, 0);
+    const overdue = c.invoices.filter((i: any) => i.status !== 'PAID' && new Date(i.dueDate) < now);
+    const lastOrder = c.invoices.length > 0 ? new Date(Math.max(...c.invoices.map((i: any) => new Date(i.invoiceDate).getTime()))).toLocaleDateString('en-GB') : 'Never';
+    const productsBought = [...new Set(c.invoices.flatMap((i: any) => i.items?.map((item: any) => item.product?.name)).filter(Boolean))];
+    return {
+      name: c.name, type: c.type, phone: c.phone, email: c.email, area: c.area,
+      creditLimit: c.creditLimit, creditBalance: c.creditBalance,
+      totalPaid: paid, totalUnpaid: unpaid,
+      invoiceCount: c.invoices.length, overdueCount: overdue.length,
+      lastOrderDate: lastOrder,
+      productsBought: productsBought.slice(0, 20),
+      recentInvoices: c.invoices.slice(0, 5).map((i: any) => ({
+        number: i.invoiceNumber, status: i.status,
+        total: i.total, date: new Date(i.invoiceDate).toLocaleDateString('en-GB'),
+        dueDate: new Date(i.dueDate).toLocaleDateString('en-GB'),
+      })),
+    };
+  });
+
+  const allInvoiceDetails = invoices.slice(0, 100).map(inv => ({
+    number: inv.invoiceNumber,
+    client: inv.client?.name,
+    status: inv.status,
+    total: inv.total,
+    date: new Date(inv.invoiceDate).toLocaleDateString('en-GB'),
+    dueDate: new Date(inv.dueDate).toLocaleDateString('en-GB'),
+    amountPaid: inv.payments?.reduce((s: number, p: any) => s + p.amount, 0) ?? 0,
+    items: inv.items?.map((item: any) => `${item.product?.name} x${item.quantity} @ K${item.unitPrice}`),
+  }));
+
+  const allExpenses = expenses.map(e => ({
+    description: e.description, category: e.category,
+    amount: e.amount, date: new Date(e.date).toLocaleDateString('en-GB'),
+  }));
+
+  const allReturns = returns_.map(r => ({
+    product: r.product?.name, quantity: r.quantity, reason: r.reason,
+    invoice: r.invoice?.invoiceNumber, client: r.invoice?.client?.name,
+    date: new Date(r.createdAt).toLocaleDateString('en-GB'),
+  }));
+
+  const manufacturerDetails = manufacturers.map(m => ({
+    name: m.name, country: m.country,
+    productCount: m.products.length,
+    totalStockValue: m.products.reduce((s: number, p: any) => s + p.price * p.currentStock, 0),
+  }));
+
   return {
     summary: {
       totalRevenue, monthRevenue, pendingValue, overdueValue,
@@ -113,6 +200,7 @@ async function getBusinessSnapshot() {
       pendingInvoices: invoices.filter(i => i.status === 'PENDING').length,
       overdueInvoices: invoices.filter(i => i.status === 'OVERDUE').length,
       totalReturns: returns_.length,
+      totalManufacturers: manufacturers.length,
     },
     topProducts,
     clientStats: clientStats.slice(0, 10),
@@ -120,6 +208,12 @@ async function getBusinessSnapshot() {
     lowStock,
     inactiveClients,
     recentExpenses: expenses.slice(0, 10).map(e => ({ description: e.description, amount: e.amount, category: e.category, date: e.date })),
+    allProductDetails,
+    allClientDetails,
+    allInvoiceDetails,
+    allExpenses,
+    allReturns,
+    manufacturerDetails,
   };
 }
 
@@ -282,23 +376,50 @@ Analyse the financial health. Is the profit margin healthy for a pharmaceutical 
       aiResponse = await callCloudflareAI(
         `${BASE_SYSTEM}
 
-You have access to this live business data:
-- Revenue this month: ZMW ${data.summary.monthRevenue.toFixed(2)}
-- Total revenue: ZMW ${data.summary.totalRevenue.toFixed(2)}  
-- Net profit: ZMW ${data.summary.netProfit.toFixed(2)}
-- Pending: ZMW ${data.summary.pendingValue.toFixed(2)} across ${data.summary.pendingInvoices} invoices
-- Overdue: ZMW ${data.summary.overdueValue.toFixed(2)} across ${data.summary.overdueInvoices} invoices
-- Total clients: ${data.summary.totalClients}
-- Total products: ${data.summary.totalProducts}
-- Low stock items: ${data.lowStock.length} products
-- Near-expiry items: ${data.expiryRisk.filter(p => p.daysLeft <= 30).length} products expiring within 30 days
-- Top client: ${data.clientStats[0]?.name ?? 'N/A'} (ZMW ${data.clientStats[0]?.totalPaid.toFixed(2) ?? 0} paid)
-- Top product: ${data.topProducts[0]?.name ?? 'N/A'} (${data.topProducts[0]?.unitsSold ?? 0} units sold)
+You have FULL access to all live Glorious Pharma business data below. Use it to answer any question accurately.
 
-Full product list: ${data.topProducts.map(p => p.name).join(', ')}
-Full client list: ${data.clientStats.map(c => c.name).join(', ')}
+=== FINANCIAL SUMMARY ===
+Total revenue: ZMW ${data.summary.totalRevenue.toFixed(2)}
+This month revenue: ZMW ${data.summary.monthRevenue.toFixed(2)}
+Total expenses: ZMW ${data.summary.totalExpenses.toFixed(2)}
+Net profit: ZMW ${data.summary.netProfit.toFixed(2)}
+Pending invoices: ZMW ${data.summary.pendingValue.toFixed(2)} (${data.summary.pendingInvoices} invoices)
+Overdue invoices: ZMW ${data.summary.overdueValue.toFixed(2)} (${data.summary.overdueInvoices} invoices)
+Total invoices: ${data.summary.totalInvoices} | Paid: ${data.summary.paidInvoices}
 
-Answer the user's question using this real data. If you don't have enough detail, say so clearly.`,
+=== ALL PRODUCTS (${data.summary.totalProducts} total) ===
+${data.allProductDetails.map(p => `${p.name} | ${p.genericName ?? ''} | ${p.type} | ${p.category ?? ''} | Mfr: ${p.manufacturer} | Stock: ${p.currentStock} units | Price: K${p.price} | Expires: ${p.expiryDate} (${p.daysUntilExpiry} days) | Stock value: K${p.stockValue.toFixed(2)} | Units sold: ${p.totalUnitsSold} | Sales revenue: K${p.totalRevenue.toFixed(2)}`).join('
+')}
+
+=== ALL CLIENTS (${data.summary.totalClients} total) ===
+${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone ?? 'N/A'} | Area: ${c.area ?? 'N/A'} | Paid: K${c.totalPaid.toFixed(2)} | Unpaid: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate} | Products: ${c.productsBought.join(', ')}`).join('
+')}
+
+=== LOW STOCK ALERTS ===
+${data.lowStock.length === 0 ? 'None' : data.lowStock.map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('
+')}
+
+=== EXPIRY RISK ===
+${data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.map(p => `${p.name}: ${p.daysLeft} days, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('
+')}
+
+=== RECENT INVOICES ===
+${data.allInvoiceDetails.slice(0, 30).map(i => `${i.number} | ${i.client} | ${i.status} | K${i.total.toFixed(2)} | ${i.date} | Due: ${i.dueDate}`).join('
+')}
+
+=== ALL EXPENSES ===
+${data.allExpenses.map(e => `${e.date} | ${e.category} | ${e.description}: K${e.amount.toFixed(2)}`).join('
+')}
+
+=== RETURNS ===
+${data.allReturns.length === 0 ? 'None' : data.allReturns.map(r => `${r.date} | ${r.product} x${r.quantity} | Reason: ${r.reason} | Client: ${r.client ?? 'N/A'} | Invoice: ${r.invoice ?? 'N/A'}`).join('
+')}
+
+=== MANUFACTURERS (${data.summary.totalManufacturers} total) ===
+${data.manufacturerDetails.map(m => `${m.name} | ${m.country ?? 'N/A'} | ${m.productCount} products | Stock value: K${m.totalStockValue.toFixed(2)}`).join('
+')}
+
+Answer the user question using this real data. Be specific with names and numbers.`,
         query
       );
     }
