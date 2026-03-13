@@ -40,7 +40,7 @@ async function getBusinessSnapshot() {
     prisma.invoice.findMany({
       where: { isHistorical: false },
       include: {
-        client: { select: { name: true, type: true, phone: true, email: true, area: true } },
+        client: { select: { name: true, type: true, phone: true, email: true } },
         items: {
           include: {
             product: {
@@ -148,7 +148,7 @@ async function getBusinessSnapshot() {
     const lastOrder = c.invoices.length > 0 ? new Date(Math.max(...c.invoices.map((i: any) => new Date(i.invoiceDate).getTime()))).toLocaleDateString('en-GB') : 'Never';
     const productsBought = [...new Set(c.invoices.flatMap((i: any) => i.items?.map((item: any) => item.product?.name)).filter(Boolean))];
     return {
-      name: c.name, type: c.type, phone: c.phone, email: c.email, area: c.area,
+      name: c.name, type: c.type, phone: c.phone, email: c.email,
       creditLimit: c.creditLimit, creditBalance: c.creditBalance,
       totalPaid: paid, totalUnpaid: unpaid,
       invoiceCount: c.invoices.length, overdueCount: overdue.length,
@@ -391,7 +391,7 @@ Total invoices: ${data.summary.totalInvoices} | Paid: ${data.summary.paidInvoice
 ${data.allProductDetails.map(p => `${p.name} | ${p.genericName ?? ''} | ${p.type} | ${p.category ?? ''} | Mfr: ${p.manufacturer} | Stock: ${p.currentStock} units | Price: K${p.price} | Expires: ${p.expiryDate} (${p.daysUntilExpiry} days) | Stock value: K${p.stockValue.toFixed(2)} | Units sold: ${p.totalUnitsSold} | Sales revenue: K${p.totalRevenue.toFixed(2)}`).join('\n')}
 
 === ALL CLIENTS (${data.summary.totalClients} total) ===
-${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone ?? 'N/A'} | Area: ${c.area ?? 'N/A'} | Paid: K${c.totalPaid.toFixed(2)} | Unpaid: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate} | Products: ${c.productsBought.join(', ')}`).join('\n')}
+${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone ?? 'N/A'} | Paid: K${c.totalPaid.toFixed(2)} | Unpaid: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate} | Products: ${c.productsBought.join(', ')}`).join('\n')}
 
 === LOW STOCK ALERTS ===
 ${data.lowStock.length === 0 ? 'None' : data.lowStock.map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('\n')}
