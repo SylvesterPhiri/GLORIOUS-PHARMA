@@ -1,420 +1,598 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
-interface Product {
-  id: string;
-  name: string;
-  genericName: string | null;
-  type: string;
-  category: string | null;
-  initialStock: number;
-  currentStock: number;
-  minStock: number;
-  reorderLevel: number;
-  price: number;
-  expiryDate: string;
-  manufacturer: {
-    name: string;
-    motherCompany: string | null;
-  } | null;
-  stockStatus: 'LOW' | 'MEDIUM' | 'GOOD';
-  isExpired: boolean;
-  isExpiringSoon: boolean;
+interface User {
+  id: string; name: string; email: string; role: string;
+  isActive: boolean; createdAt: string;
 }
 
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
+interface SystemSettings {
+  companyName: string; currency: string; taxRate: string;
+  invoicePrefix: string; lowStockDefault: string; timezone: string; logoUrl: string;
 }
 
-export default function InventoryPage() {
-  const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, total: 0, pages: 1 });
-  const [search, setSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [lastRefresh, setLastRefresh] = useState(Date.now());
-  const [limit, setLimit] = useState(20);
+type Tab = 'profile' | 'general' | 'users' | 'danger';
 
-  useEffect(() => {
-    fetchProducts(true);
-  }, [pagination.page, search, lastRefresh, limit]);
+const ROLES = ['SUPER_ADMIN', 'ADMIN', 'PHARMACIST', 'SALES_REP', 'ACCOUNTANT'];
 
-  const fetchProducts = async (force = false) => {
+const ALL_PERMISSIONS = [
+  { key: 'invoices.view',       label: 'Invoices — View'         },
+  { key: 'invoices.create',     label: 'Invoices — Create'       },
+  { key: 'invoices.edit',       label: 'Invoices — Edit'         },
+  { key: 'invoices.delete',     label: 'Invoices — Delete'       },
+  { key: 'clients.view',        label: 'Clients — View'          },
+  { key: 'clients.create',      label: 'Clients — Create'        },
+  { key: 'clients.edit',        label: 'Clients — Edit'          },
+  { key: 'clients.delete',      label: 'Clients — Delete'        },
+  { key: 'inventory.view',      label: 'Inventory — View'        },
+  { key: 'inventory.create',    label: 'Inventory — Create'      },
+  { key: 'inventory.edit',      label: 'Inventory — Edit'        },
+  { key: 'inventory.delete',    label: 'Inventory — Delete'      },
+  { key: 'manufacturers.view',  label: 'Manufacturers — View'    },
+  { key: 'manufacturers.edit',  label: 'Manufacturers — Edit'    },
+  { key: 'reports.view',        label: 'Reports — View'          },
+  { key: 'accounting.view',     label: 'Accounting — View'       },
+  { key: 'accounting.edit',     label: 'Accounting — Edit'       },
+  { key: 'users.view',          label: 'Users — View'            },
+  { key: 'users.manage',        label: 'Users — Manage'          },
+  { key: 'settings.view',       label: 'Settings — View'         },
+  { key: 'settings.edit',       label: 'Settings — Edit'         },
+  { key: 'audit.view',          label: 'Audit Log — View'        },
+  { key: 'returns.view',        label: 'Returns — View'          },
+  { key: 'returns.process',     label: 'Returns — Process'       },
+];
+
+const DEFAULT_PERMS_BY_ROLE: Record<string, string[]> = {
+  SUPER_ADMIN: ALL_PERMISSIONS.map(p => p.key),
+  ADMIN:       ['invoices.view','invoices.create','invoices.edit','invoices.delete','clients.view','clients.create','clients.edit','clients.delete','inventory.view','inventory.create','inventory.edit','inventory.delete','manufacturers.view','manufacturers.edit','reports.view','accounting.view','accounting.edit','users.view','returns.view','returns.process'],
+  PHARMACIST:  ['invoices.view','invoices.create','inventory.view','clients.view','returns.view','returns.process'],
+  SALES_REP:   ['invoices.view','invoices.create','clients.view','clients.create','clients.edit','inventory.view','returns.view'],
+  ACCOUNTANT:  ['invoices.view','accounting.view','accounting.edit','reports.view','audit.view','returns.view'],
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  SUPER_ADMIN: 'bg-purple-100 text-purple-800',
+  ADMIN:       'bg-blue-100 text-blue-800',
+  PHARMACIST:  'bg-green-100 text-green-800',
+  SALES_REP:   'bg-orange-100 text-orange-800',
+  ACCOUNTANT:  'bg-yellow-100 text-yellow-800',
+};
+
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
+
+  const [profile, setProfile] = useState({ name: '', email: '', currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [profileLoading,  setProfileLoading]  = useState(true);
+  const [profileSaving,   setProfileSaving]   = useState(false);
+  const [profileError,    setProfileError]    = useState('');
+  const [profileSuccess,  setProfileSuccess]  = useState('');
+  const [currentUserId,   setCurrentUserId]   = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState('');
+
+  const [settings, setSettings] = useState<SystemSettings>({
+    companyName: 'GloriousPharma', currency: 'ZMW', taxRate: '0',
+    invoicePrefix: 'INV', lowStockDefault: '10', timezone: 'Africa/Lusaka', logoUrl: '',
+  });
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [savingSettings,  setSavingSettings]  = useState(false);
+  const [settingsSaved,   setSettingsSaved]   = useState(false);
+  const [settingsError,   setSettingsError]   = useState('');
+  const [logoUploading,   setLogoUploading]   = useState(false);
+  const [logoError,       setLogoError]       = useState('');
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const [users,           setUsers]           = useState<User[]>([]);
+  const [usersLoading,    setUsersLoading]    = useState(false);
+  const [showUserForm,    setShowUserForm]    = useState(false);
+  const [editingUser,     setEditingUser]     = useState<User | null>(null);
+  const [showPerms,       setShowPerms]       = useState<User | null>(null);
+  const [userPerms,       setUserPerms]       = useState<string[]>([]);
+  const [permsSaving,     setPermsSaving]     = useState(false);
+  const [permsError,      setPermsError]      = useState('');
+  const [userForm,        setUserForm]        = useState({ name: '', email: '', role: 'PHARMACIST', password: '', confirmPassword: '' });
+  const [userFormError,   setUserFormError]   = useState('');
+  const [userFormLoading, setUserFormLoading] = useState(false);
+  const [deleteConfirm,   setDeleteConfirm]   = useState<User | null>(null);
+
+  const [dangerConfirm, setDangerConfirm] = useState<'audit' | 'reset' | null>(null);
+  const [dangerLoading, setDangerLoading] = useState(false);
+  const [dangerMessage, setDangerMessage] = useState('');
+
+  useEffect(() => { loadSettings(); loadProfile(); }, []);
+  useEffect(() => { if (activeTab === 'users') fetchUsers(); }, [activeTab]);
+
+  const loadProfile = async () => {
+    setProfileLoading(true);
     try {
-      setIsLoading(true);
-      const query = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: limit.toString(),
-        _t: force ? Date.now().toString() : '',
-        ...(search && { search }),
-      }).toString();
-
-      const response = await fetch(`/api/products?${query}`, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch products');
-
-      const data = await response.json();
-      setProducts(data.products);
-      setPagination(data.pagination);
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(p => ({ ...p, name: data.name ?? '', email: data.email ?? '' }));
+        setCurrentUserId(data.id ?? '');
+        setCurrentUserRole(data.role ?? '');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
-      console.error('Error fetching products:', err);
+      console.error('Failed to load profile:', err);
     } finally {
-      setIsLoading(false);
+      setProfileLoading(false);
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchProducts(true);
-  };
-
-  const getStockColor = (status: string) => {
-    switch (status) {
-      case 'LOW': return 'text-red-600 bg-red-50 border border-red-200';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-50 border border-yellow-200';
-      case 'GOOD': return 'text-green-600 bg-green-50 border border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border border-gray-200';
+  const handleSaveProfile = async () => {
+    setProfileError(''); setProfileSuccess('');
+    if (!profile.name.trim() || !profile.email.trim()) { setProfileError('Name and email are required.'); return; }
+    if (profile.newPassword) {
+      if (!profile.currentPassword)             { setProfileError('Enter your current password to set a new one.'); return; }
+      if (profile.newPassword.length < 6)       { setProfileError('New password must be at least 6 characters.'); return; }
+      if (profile.newPassword !== profile.confirmPassword) { setProfileError('New passwords do not match.'); return; }
+    }
+    setProfileSaving(true);
+    try {
+      const body: any = { name: profile.name.trim(), email: profile.email.trim() };
+      if (profile.newPassword) { body.currentPassword = profile.currentPassword; body.password = profile.newPassword; }
+      const res  = await fetch(`/api/users/${currentUserId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      setProfileSuccess('Profile updated successfully!');
+      setProfile(p => ({ ...p, currentPassword: '', newPassword: '', confirmPassword: '' }));
+      setTimeout(() => setProfileSuccess(''), 4000);
+    } catch (err: any) {
+      setProfileError(err.message);
+    } finally {
+      setProfileSaving(false);
     }
   };
 
-  const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      TABLET: 'bg-blue-100 text-blue-800',
-      CAPSULE: 'bg-purple-100 text-purple-800',
-      SYRUP: 'bg-green-100 text-green-800',
-      INJECTION: 'bg-red-100 text-red-800',
-      OINTMENT: 'bg-amber-100 text-amber-800',
-      OTHER: 'bg-gray-100 text-gray-800'
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
+  const loadSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) { const data = await res.json(); if (data.settings) setSettings(data.settings); }
+    } catch (err) { console.error(err); }
+    finally { setSettingsLoading(false); }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+  const handleSaveSettings = async () => {
+    setSavingSettings(true); setSettingsError('');
+    try {
+      const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+      if (!res.ok) throw new Error('Failed to save');
+      setSettingsSaved(true); setTimeout(() => setSettingsSaved(false), 3000);
+    } catch { setSettingsError('Failed to save settings. Try again.'); }
+    finally { setSavingSettings(false); }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setLogoUploading(true); setLogoError('');
+    try {
+      const fd = new FormData(); fd.append('logo', file);
+      const res  = await fetch('/api/settings/logo', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setSettings(p => ({ ...p, logoUrl: data.logoUrl }));
+    } catch (err: any) { setLogoError(err.message); }
+    finally { setLogoUploading(false); }
+  };
+
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) { const data = await res.json(); setUsers(data.users ?? []); }
+    } catch (err) { console.error(err); }
+    finally { setUsersLoading(false); }
+  };
+
+  const handleUserSubmit = async () => {
+    if (!userForm.name.trim() || !userForm.email.trim()) { setUserFormError('Name and email required.'); return; }
+    if (!editingUser && !userForm.password.trim())        { setUserFormError('Password required for new users.'); return; }
+    if (userForm.password && userForm.password !== userForm.confirmPassword) { setUserFormError('Passwords do not match.'); return; }
+    setUserFormLoading(true); setUserFormError('');
+    try {
+      const url    = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
+      const method = editingUser ? 'PUT' : 'POST';
+      const body: any = { name: userForm.name, email: userForm.email, role: userForm.role };
+      if (userForm.password) body.password = userForm.password;
+      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setShowUserForm(false); fetchUsers();
+    } catch (err: any) { setUserFormError(err.message); }
+    finally { setUserFormLoading(false); }
+  };
+
+  const handleDeactivate = async (user: User) => {
+    try { await fetch(`/api/users/${user.id}`, { method: 'DELETE' }); setDeleteConfirm(null); fetchUsers(); }
+    catch (err) { console.error(err); }
+  };
+
+  const handleDangerAction = async (action: 'audit' | 'reset') => {
+    setDangerLoading(true); setDangerMessage('');
+    try {
+      const res  = await fetch('/api/settings/danger', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: action === 'audit' ? 'clear_audit_logs' : 'reset_data' }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setDangerMessage(data.message); setDangerConfirm(null);
+    } catch (err: any) { setDangerMessage('Error: ' + err.message); }
+    finally { setDangerLoading(false); }
+  };
+
+  const openPermsModal = async (user: User) => {
+    setShowPerms(user);
+    setPermsError('');
 
     try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to delete product');
-
-      setLastRefresh(Date.now());
-      fetchProducts(true);
+      const res = await fetch(`/api/users/${user.id}/permissions`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserPerms(data.permissions || []);
+      } else {
+        setPermsError('Failed to load permissions. Please try again.');
+        setUserPerms([]);
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete product');
-      console.error('Delete error:', err);
+      console.error('Error fetching permissions:', err);
+      setPermsError('Failed to load permissions. Please try again.');
+      setUserPerms([]);
     }
   };
 
-
-  const handlePrintPDF = () => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <html><head><title>Glorious Pharma - Inventory</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #1e40af; color: white; padding: 8px 10px; text-align: left; }
-        td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; }
-        tr:nth-child(even) { background: #f9fafb; }
-        .low { color: #dc2626; font-weight: bold; }
-        .medium { color: #d97706; font-weight: bold; }
-        .good { color: #16a34a; font-weight: bold; }
-        .header { display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:2px solid #1e40af; padding-bottom:12px; }
-        .company { font-size:20px; font-weight:bold; color:#1e40af; }
-        .meta { font-size:11px; color:#666; margin-top:4px; }
-      </style></head><body>
-      <div class="header">
-        <div><div class="company">GLORIOUS PHARMA.CO.LTD</div><div class="meta">Inventory Report</div></div>
-        <div class="meta" style="text-align:right">Total: ${pagination.total} | Showing: ${products.length}</div>
-      </div>
-      <table><thead><tr>
-        <th>#</th><th>Product Name</th><th>Generic Name</th><th>Type</th><th>Manufacturer</th>
-        <th>Initial Stock</th><th>Current Stock</th><th>Price (K)</th><th>Expiry</th><th>Status</th>
-      </tr></thead><tbody>
-      ${products.map((p, i) => `<tr>
-        <td>${i + 1}</td>
-        <td><strong>${p.name}</strong></td>
-        <td>${p.genericName || '—'}</td>
-        <td>${p.type?.toLowerCase() || '—'}</td>
-        <td>${p.manufacturer?.name || '—'}${p.manufacturer?.motherCompany ? ` (${p.manufacturer.motherCompany})` : ''}</td>
-        <td>${p.initialStock} units</td>
-        <td class="${p.stockStatus.toLowerCase()}">${p.currentStock} units</td>
-        <td>K${p.price.toFixed(2)}</td>
-        <td>${new Date(p.expiryDate).toLocaleDateString()}</td>
-        <td class="${p.stockStatus.toLowerCase()}">${p.stockStatus}</td>
-      </tr>`).join('')}
-      </tbody></table></body></html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
+  const handleSavePerms = async () => {
+    if (!showPerms) return;
+    setPermsSaving(true); setPermsError('');
+    try {
+      const res  = await fetch(`/api/users/${showPerms.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ permissions: userPerms }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save permissions');
+      setShowPerms(null);
+    } catch (err: any) { setPermsError(err.message); }
+    finally { setPermsSaving(false); }
   };
+
+  const togglePerm = (key: string) => setUserPerms(prev => prev.includes(key) ? prev.filter(p => p !== key) : [...prev, key]);
+
+  const userStats = {
+    total: users.length, active: users.filter(u => u.isActive).length,
+    admins: users.filter(u => u.role === 'SUPER_ADMIN' || u.role === 'ADMIN').length,
+    pharmacists: users.filter(u => u.role === 'PHARMACIST').length,
+  };
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'profile', label: '👤 My Profile'    },
+    { id: 'general', label: 'General Settings' },
+    { id: 'users',   label: 'User Management'  },
+    { id: 'danger',  label: '⚠ Danger Zone'    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-6">
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-1">System configuration and user management</p>
+        </div>
+        <Link href="/" className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Dashboard</Link>
+      </div>
 
-        {/* Header with Dashboard breadcrumb */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-2 mb-4">
-            <Link href="/" className="text-blue-600 hover:text-blue-800 flex items-center">
-              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Dashboard
-            </Link>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-600 font-medium">Inventory</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                Inventory Management
-              </h1>
-              <p className="text-gray-600 mt-2">Track and manage your medicine stock</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handlePrintPDF}
-                className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all shadow-lg flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                Print / PDF
-              </button>
-              <button
-                onClick={() => setLastRefresh(Date.now())}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-              </button>
-              <Link
-                href="/inventory/add"
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add New Medicine
-              </Link>
-            </div>
-          </div>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="flex border-b border-gray-200">
+          {TABS.map((tab) => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              } ${tab.id === 'danger' ? '!text-red-500' : ''}`}>
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-8">
-          <form onSubmit={handleSearch}>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Search Products</label>
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by name, generic name, or batch number..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full px-4 py-3 pl-10 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                />
-                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <button
-                type="submit"
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg"
-              >
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSearch(''); fetchProducts(true); }}
-                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-        </div>
+        <div className="p-6">
 
-        {/* Products Table */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Product List</h2>
-              <p className="text-sm text-gray-500 mt-1">Total {pagination.total} products found</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 font-medium">Show:</label>
-              <select
-                value={limit}
-                onChange={(e) => { setLimit(Number(e.target.value)); setPagination(p => ({ ...p, page: 1 })); }}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:border-blue-500"
-              >
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={250}>250</option>
-                <option value={500}>500</option>
-                <option value={99999}>All</option>
-              </select>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="p-12 text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-gray-600">Loading products...</p>
-            </div>
-          ) : error ? (
-            <div className="p-12 text-center">
-              <div className="text-6xl mb-4">⚠️</div>
-              <p className="text-red-600 text-lg mb-4">Error: {error}</p>
-              <button
-                onClick={() => fetchProducts(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg"
-              >
-                Retry
-              </button>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-6xl mb-4">💊</div>
-              <p className="text-gray-500 text-lg mb-4">No products found.</p>
-              {search ? (
-                <p className="text-gray-400">Try adjusting your search terms</p>
+          {}
+          {activeTab === 'profile' && (
+            <div className="max-w-lg space-y-8">
+              {profileLoading ? (
+                <div className="text-center py-8"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"/></div>
               ) : (
-                <Link
-                  href="/inventory/add"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Your First Medicine
-                </Link>
+                <>
+                  {}
+                  <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg flex-shrink-0">
+                      {profile.name.charAt(0).toUpperCase() || '?'}
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 text-lg">{profile.name || 'Your Name'}</div>
+                      <div className="text-sm text-gray-500">{profile.email}</div>
+                      <span className={`mt-1 inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${ROLE_COLORS[currentUserRole] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {currentUserRole}
+                      </span>
+                    </div>
+                  </div>
+
+                  {}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Account Information</h3>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                      <input type="text" value={profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Your full name" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                      <input type="email" value={profile.email} onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="you@example.com" />
+                    </div>
+                  </div>
+
+                  {}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+                      Change Password <span className="text-gray-400 font-normal text-xs">(leave blank to keep current)</span>
+                    </h3>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                      <input type="password" value={profile.currentPassword} onChange={(e) => setProfile(p => ({ ...p, currentPassword: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter current password" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                      <input type="password" value={profile.newPassword} onChange={(e) => setProfile(p => ({ ...p, newPassword: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Min 6 characters" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                      <input type="password" value={profile.confirmPassword} onChange={(e) => setProfile(p => ({ ...p, confirmPassword: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Repeat new password" />
+                    </div>
+                  </div>
+
+                  {profileError   && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{profileError}</p>}
+                  {profileSuccess && <p className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3">✓ {profileSuccess}</p>}
+
+                  <button onClick={handleSaveProfile} disabled={profileSaving}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 text-sm font-medium">
+                    {profileSaving ? 'Saving...' : 'Save Profile'}
+                  </button>
+                </>
               )}
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Initial Stock</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500 mt-1">
-                          {product.genericName && <span>{product.genericName}</span>}
-                          {product.manufacturer && (
-                            <div className="text-xs text-gray-400">
-                              {product.manufacturer.name}
-                              {product.manufacturer.motherCompany && ` (${product.manufacturer.motherCompany})`}
+          )}
+
+          {}
+          {activeTab === 'general' && (
+            <div className="max-w-xl space-y-6">
+              {settingsLoading ? (
+                <div className="text-center py-8"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"/></div>
+              ) : (
+                <>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Company Logo</h3>
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                        {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-2xl text-gray-300">🏥</span>}
+                      </div>
+                      <div>
+                        <input ref={logoInputRef} type="file" accept="image}
+          {activeTab === 'users' && (
+            <div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {[
+                  { label: 'Total Users', value: userStats.total },
+                  { label: 'Active',      value: userStats.active },
+                  { label: 'Admins',      value: userStats.admins },
+                  { label: 'Pharmacists', value: userStats.pharmacists },
+                ].map((s) => (
+                  <div key={s.label} className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-xs text-gray-500">{s.label}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-0.5">{s.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-base font-semibold text-gray-900">User Accounts</h2>
+                <div className="flex gap-3">
+                  <button onClick={fetchUsers} disabled={usersLoading}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm disabled:opacity-50">
+                    {usersLoading ? 'Loading...' : 'Refresh'}
+                  </button>
+                  <button onClick={() => { setEditingUser(null); setUserForm({ name: '', email: '', role: 'PHARMACIST', password: '', confirmPassword: '' }); setUserFormError(''); setShowUserForm(true); }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">+ Create User</button>
+                </div>
+              </div>
+              {usersLoading ? (
+                <div className="text-center py-12"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"/></div>
+              ) : users.length === 0 ? (
+                <p className="text-gray-400 text-sm text-center py-8">No users found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>{['Name', 'Email', 'Role', 'Status', 'Created', 'Actions'].map(h => (
+                        <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                      ))}</tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {users.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {user.name}
+                            {user.id === currentUserId && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">You</span>}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{user.email}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${ROLE_COLORS[user.role] ?? 'bg-gray-100 text-gray-700'}`}>{user.role}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {user.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-400">{new Date(user.createdAt).toLocaleDateString()}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-3 text-sm">
+                              <button onClick={() => { setEditingUser(user); setUserForm({ name: user.name, email: user.email, role: user.role, password: '', confirmPassword: '' }); setUserFormError(''); setShowUserForm(true); }}
+                                className="text-blue-600 hover:text-blue-800">Edit</button>
+                              <button onClick={() => openPermsModal(user)} className="text-purple-600 hover:text-purple-800">Permissions</button>
+                              {user.isActive && user.id !== currentUserId && (
+                                <button onClick={() => setDeleteConfirm(user)} className="text-red-600 hover:text-red-800">Deactivate</button>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getTypeColor(product.type)}`}>
-                          {product.type?.toLowerCase() || 'N/A'}
-                        </span>
-                        {product.category && (
-                          <div className="text-xs text-gray-500 mt-1">{product.category}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">{product.initialStock} units</div>
-                        <div className="text-xs text-gray-500 mt-1">Original quantity</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStockColor(product.stockStatus)}`}>
-                          <span className="w-2 h-2 rounded-full mr-1.5 bg-current"></span>
-                          {product.currentStock} units
-                        </span>
-                        {product.currentStock <= product.minStock && (
-                          <div className="text-xs text-red-600 mt-1">Below minimum</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-gray-900">
-                        K{product.price.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center ${product.isExpired ? 'text-red-600' : product.isExpiringSoon ? 'text-yellow-600' : 'text-green-600'}`}>
-                          <span className={`w-2 h-2 rounded-full mr-1.5 ${
-                            product.isExpired ? 'bg-red-600' : product.isExpiringSoon ? 'bg-yellow-600' : 'bg-green-600'
-                          }`}></span>
-                          {new Date(product.expiryDate).toLocaleDateString()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <Link
-                            href={`/inventory/${product.id}`}
-                            className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
-                          >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            View
-                          </Link>
-                          <Link
-                            href={`/inventory/${product.id}/edit`}
-                            className="text-green-600 hover:text-green-800 font-medium text-sm flex items-center"
-                          >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(product.id, product.name)}
-                            className="text-red-600 hover:text-red-800 font-medium text-sm flex items-center"
-                          >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
+
+          {}
+          {activeTab === 'danger' && (
+            <div className="space-y-4 max-w-xl">
+              <div className="p-5 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-blue-800 mb-1">Download Database Backup</h3>
+                <p className="text-xs text-blue-600 mb-3">Downloads a full copy of the database. Store it somewhere safe.</p>
+                <a href="/api/settings/backup" download className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">⬇ Download Backup</a>
+              </div>
+              {dangerMessage && <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">{dangerMessage}</div>}
+              <div className="p-5 bg-red-50 border border-red-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-red-800 mb-1">Clear Audit Logs</h3>
+                <p className="text-xs text-red-600 mb-3">Permanently delete all audit log entries. This cannot be undone.</p>
+                {dangerConfirm === 'audit' ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-red-700 font-medium">Are you sure?</span>
+                    <button onClick={() => handleDangerAction('audit')} disabled={dangerLoading}
+                      className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50">
+                      {dangerLoading ? 'Deleting...' : 'Yes, Delete All'}
+                    </button>
+                    <button onClick={() => setDangerConfirm(null)} className="px-3 py-1.5 bg-gray-200 rounded text-sm hover:bg-gray-300">Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setDangerConfirm('audit')} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">Clear All Logs</button>
+                )}
+              </div>
+              <div className="p-5 bg-red-50 border border-red-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-red-800 mb-1">Reset System Data</h3>
+                <p className="text-xs text-red-600 mb-3">Permanently removes ALL invoices, products, clients, manufacturers, expenses and audit logs. Users and settings are preserved. This cannot be undone.</p>
+                {dangerConfirm === 'reset' ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-red-700 font-medium">This will wipe all data. Sure?</span>
+                    <button onClick={() => handleDangerAction('reset')} disabled={dangerLoading}
+                      className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50">
+                      {dangerLoading ? 'Resetting...' : 'Yes, Reset Everything'}
+                    </button>
+                    <button onClick={() => setDangerConfirm(null)} className="px-3 py-1.5 bg-gray-200 rounded text-sm hover:bg-gray-300">Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setDangerConfirm('reset')} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">Reset All Data</button>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
+
+      {}
+      {showUserForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-5">{editingUser ? `Edit — ${editingUser.name}` : 'Create New User'}</h3>
+            <div className="space-y-4">
+              {[{ key: 'name', label: 'Full Name *', type: 'text' }, { key: 'email', label: 'Email *', type: 'email' }].map(({ key, label, type }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                  <input type={type} value={(userForm as any)[key]} onChange={(e) => setUserForm(p => ({ ...p, [key]: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>
+              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                <select value={userForm.role} onChange={(e) => setUserForm(p => ({ ...p, role: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {editingUser ? 'New Password (leave blank to keep current)' : 'Password *'}
+                </label>
+                <input type="password" value={userForm.password} onChange={(e) => setUserForm(p => ({ ...p, password: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder={editingUser ? 'Leave blank to keep current' : 'Min 6 characters'} />
+              </div>
+              {(userForm.password || !editingUser) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password {!editingUser && '*'}</label>
+                  <input type="password" value={userForm.confirmPassword} onChange={(e) => setUserForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Repeat password" />
+                </div>
+              )}
+              {userFormError && <p className="text-red-600 text-sm">{userFormError}</p>}
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowUserForm(false)} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Cancel</button>
+              <button onClick={handleUserSubmit} disabled={userFormLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 text-sm">
+                {userFormLoading ? 'Saving...' : editingUser ? 'Save Changes' : 'Create User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {}
+      {showPerms && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-lg font-bold text-gray-900">Permissions — {showPerms.name}</h3>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_COLORS[showPerms.role]}`}>{showPerms.role}</span>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">Manually toggle individual permissions. Changes are saved independently of their role.</p>
+            <div className="flex gap-2 mb-4">
+              <button onClick={() => setUserPerms(ALL_PERMISSIONS.map(p => p.key))} className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200">Select All</button>
+              <button onClick={() => setUserPerms([])} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200">Clear All</button>
+              <button onClick={() => setUserPerms(DEFAULT_PERMS_BY_ROLE[showPerms.role] ?? [])} className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">Reset to Role Defaults</button>
+            </div>
+            <div className="grid grid-cols-1 gap-1">
+              {ALL_PERMISSIONS.map((perm) => (
+                <label key={perm.key} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer border border-transparent hover:border-gray-200">
+                  <input type="checkbox" checked={userPerms.includes(perm.key)} onChange={() => togglePerm(perm.key)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-700">{perm.label}</span>
+                </label>
+              ))}
+            </div>
+            {permsError && <p className="text-red-600 text-sm mt-3">{permsError}</p>}
+            <div className="flex justify-end gap-3 mt-5 pt-4 border-t">
+              <button onClick={() => setShowPerms(null)} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Cancel</button>
+              <button onClick={handleSavePerms} disabled={permsSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 text-sm">
+                {permsSaving ? 'Saving...' : 'Save Permissions'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Deactivate User</h3>
+            <p className="text-gray-600 mb-4">Deactivate <strong>{deleteConfirm.name}</strong>? They won't be able to log in.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+              <button onClick={() => handleDeactivate(deleteConfirm)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Deactivate</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
