@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -206,7 +206,7 @@ export default function SettingsPage() {
 
   const handleDeactivate = async (user: User) => {
     try { await fetch(`/api/users/${user.id}`, { method: 'DELETE' }); setDeleteConfirm(null); fetchUsers(); }
-    catch (err) { console.error(err); }
+    } catch (err) { console.error(err); }
   };
 
   const handleDangerAction = async (action: 'audit' | 'reset') => {
