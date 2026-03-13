@@ -388,36 +388,28 @@ Overdue invoices: ZMW ${data.summary.overdueValue.toFixed(2)} (${data.summary.ov
 Total invoices: ${data.summary.totalInvoices} | Paid: ${data.summary.paidInvoices}
 
 === ALL PRODUCTS (${data.summary.totalProducts} total) ===
-${data.allProductDetails.map(p => `${p.name} | ${p.genericName ?? ''} | ${p.type} | ${p.category ?? ''} | Mfr: ${p.manufacturer} | Stock: ${p.currentStock} units | Price: K${p.price} | Expires: ${p.expiryDate} (${p.daysUntilExpiry} days) | Stock value: K${p.stockValue.toFixed(2)} | Units sold: ${p.totalUnitsSold} | Sales revenue: K${p.totalRevenue.toFixed(2)}`).join('
-')}
+${data.allProductDetails.map(p => `${p.name} | ${p.genericName ?? ''} | ${p.type} | ${p.category ?? ''} | Mfr: ${p.manufacturer} | Stock: ${p.currentStock} units | Price: K${p.price} | Expires: ${p.expiryDate} (${p.daysUntilExpiry} days) | Stock value: K${p.stockValue.toFixed(2)} | Units sold: ${p.totalUnitsSold} | Sales revenue: K${p.totalRevenue.toFixed(2)}`).join('\n')}
 
 === ALL CLIENTS (${data.summary.totalClients} total) ===
-${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone ?? 'N/A'} | Area: ${c.area ?? 'N/A'} | Paid: K${c.totalPaid.toFixed(2)} | Unpaid: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate} | Products: ${c.productsBought.join(', ')}`).join('
-')}
+${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone ?? 'N/A'} | Area: ${c.area ?? 'N/A'} | Paid: K${c.totalPaid.toFixed(2)} | Unpaid: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate} | Products: ${c.productsBought.join(', ')}`).join('\n')}
 
 === LOW STOCK ALERTS ===
-${data.lowStock.length === 0 ? 'None' : data.lowStock.map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('
-')}
+${data.lowStock.length === 0 ? 'None' : data.lowStock.map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('\n')}
 
 === EXPIRY RISK ===
-${data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.map(p => `${p.name}: ${p.daysLeft} days, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('
-')}
+${data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.map(p => `${p.name}: ${p.daysLeft} days, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('\n')}
 
 === RECENT INVOICES ===
-${data.allInvoiceDetails.slice(0, 30).map(i => `${i.number} | ${i.client} | ${i.status} | K${i.total.toFixed(2)} | ${i.date} | Due: ${i.dueDate}`).join('
-')}
+${data.allInvoiceDetails.slice(0, 30).map(i => `${i.number} | ${i.client} | ${i.status} | K${i.total.toFixed(2)} | ${i.date} | Due: ${i.dueDate}`).join('\n')}
 
 === ALL EXPENSES ===
-${data.allExpenses.map(e => `${e.date} | ${e.category} | ${e.description}: K${e.amount.toFixed(2)}`).join('
-')}
+${data.allExpenses.map(e => `${e.date} | ${e.category} | ${e.description}: K${e.amount.toFixed(2)}`).join('\n')}
 
 === RETURNS ===
-${data.allReturns.length === 0 ? 'None' : data.allReturns.map(r => `${r.date} | ${r.product} x${r.quantity} | Reason: ${r.reason} | Client: ${r.client ?? 'N/A'} | Invoice: ${r.invoice ?? 'N/A'}`).join('
-')}
+${data.allReturns.length === 0 ? 'None' : data.allReturns.map(r => `${r.date} | ${r.product} x${r.quantity} | Reason: ${r.reason} | Client: ${r.client ?? 'N/A'} | Invoice: ${r.invoice ?? 'N/A'}`).join('\n')}
 
 === MANUFACTURERS (${data.summary.totalManufacturers} total) ===
-${data.manufacturerDetails.map(m => `${m.name} | ${m.country ?? 'N/A'} | ${m.productCount} products | Stock value: K${m.totalStockValue.toFixed(2)}`).join('
-')}
+${data.manufacturerDetails.map(m => `${m.name} | ${m.country ?? 'N/A'} | ${m.productCount} products | Stock value: K${m.totalStockValue.toFixed(2)}`).join('\n')}
 
 Answer the user question using this real data. Be specific with names and numbers.`,
         query
