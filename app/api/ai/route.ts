@@ -7,35 +7,15 @@ async function getBusinessSnapshot() {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  const [products, clients, invoices, expenses, returns_, manufacturers, users, settings] = await Promise.all([
+  const [products, clients, invoices, expenses, returns_, manufacturers] = await Promise.all([
     prisma.product.findMany({
-      include: {
-        manufacturer: true,
-        invoiceItems: {
-          include: {
-            invoice: {
-              select: {
-                invoiceNumber: true, invoiceDate: true, status: true,
-                client: { select: { name: true, type: true } },
-              },
-            },
-          },
-        },
-        returns: true,
-      },
+      include: { manufacturer: true, invoiceItems: true, returns: true },
       orderBy: { name: 'asc' },
     }),
     prisma.client.findMany({
       include: {
         invoices: {
-          include: {
-            items: {
-              include: {
-                product: { select: { name: true, type: true, category: true, genericName: true } },
-              },
-            },
-            payments: true,
-          },
+          include: { items: { include: { product: { select: { name: true } } } }, payments: true },
           orderBy: { invoiceDate: 'desc' },
         },
       },
@@ -44,269 +24,131 @@ async function getBusinessSnapshot() {
     prisma.invoice.findMany({
       where: { isHistorical: false },
       include: {
-        client: { select: { name: true, type: true, phone: true, email: true, address: true, company: true } },
-        items: {
-          include: {
-            product: { select: { name: true, type: true, category: true, genericName: true, price: true } },
-          },
-        },
+        client: { select: { name: true, type: true, phone: true } },
+        items: { include: { product: { select: { name: true, price: true } } } },
         payments: true,
-        returns: {
-          include: { product: { select: { name: true } } },
-        },
       },
       orderBy: { invoiceDate: 'desc' },
     }),
     prisma.expense.findMany({ orderBy: { date: 'desc' } }),
     prisma.return.findMany({
       include: {
-        product: { select: { name: true, type: true, category: true, genericName: true } },
-        invoice: {
-          select: {
-            invoiceNumber: true,
-            client: { select: { name: true } },
-          },
-        },
+        product: { select: { name: true } },
+        invoice: { select: { invoiceNumber: true, client: { select: { name: true } } } },
       },
       orderBy: { returnDate: 'desc' },
     }),
     prisma.manufacturer.findMany({
-      include: {
-        products: {
-          select: { name: true, currentStock: true, price: true, type: true, category: true, expiryDate: true },
-        },
-      },
-      orderBy: { name: 'asc' },
+      include: { products: { select: { name: true, currentStock: true, price: true } } },
     }),
-    prisma.user.findMany({
-      select: { name: true, email: true, role: true, isActive: true, lastLoginAt: true, createdAt: true },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.setting.findMany(),
   ]);
 
-  // ── Product sales analysis ──
-  const productSales: Record<string, { name: string; unitsSold: number; revenue: number; recentUnits: number; freeSamples: number }> = {};
-  for (const inv of invoices) {
-    for (const item of inv.items) {
-      const name = item.product?.name ?? 'Unknown';
-      if (!productSales[name]) productSales[name] = { name, unitsSold: 0, revenue: 0, recentUnits: 0, freeSamples: 0 };
-      productSales[name].unitsSold += item.quantity;
-      productSales[name].revenue += item.totalPrice;
-      productSales[name].freeSamples += item.freeSamples;
-      if (new Date(inv.invoiceDate) >= thirtyDaysAgo) productSales[name].recentUnits += item.quantity;
-    }
-  }
-  const topProducts = Object.values(productSales).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+  const now2 = new Date();
 
-  // ── Client analysis ──
-  const clientStats = clients.map(c => {
-    const paid = c.invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
-    const unpaid = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s, i) => s + i.total, 0);
-    const overdue = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED' && new Date(i.dueDate) < now);
-    const recent = c.invoices.filter(i => new Date(i.invoiceDate) >= thirtyDaysAgo).length;
-    const creditUtil = c.creditLimit ? (unpaid / c.creditLimit) * 100 : 0;
-    return {
-      name: c.name, type: c.type, totalPaid: paid, totalUnpaid: unpaid,
-      invoiceCount: c.invoices.length, overdueCount: overdue.length,
-      creditLimit: c.creditLimit, creditUtilization: Math.round(creditUtil), recentOrders: recent,
-    };
-  }).sort((a, b) => b.totalPaid - a.totalPaid);
-
-  // ── Financial totals ──
+  // Financial totals
   const totalRevenue = invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
   const monthRevenue = invoices.filter(i => i.status === 'PAID' && new Date(i.invoiceDate) >= thirtyDaysAgo).reduce((s, i) => s + i.total, 0);
   const pendingValue = invoices.filter(i => i.status === 'PENDING').reduce((s, i) => s + i.total, 0);
   const overdueValue = invoices.filter(i => i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
-  // ── Expiry risk ──
-  const expiryRisk = products.map(p => {
-    const daysLeft = Math.ceil((new Date(p.expiryDate).getTime() - now.getTime()) / 86400000);
-    const stockValue = p.price * p.currentStock;
-    return { name: p.name, daysLeft, currentStock: p.currentStock, stockValue, minStock: p.minStock, reorderLevel: p.reorderLevel };
-  }).filter(p => p.daysLeft <= 180).sort((a, b) => a.daysLeft - b.daysLeft);
+  // Product sales
+  const salesMap: Record<string, { name: string; units: number; revenue: number; recent: number }> = {};
+  for (const inv of invoices) {
+    for (const item of inv.items) {
+      const n = item.product?.name ?? 'Unknown';
+      if (!salesMap[n]) salesMap[n] = { name: n, units: 0, revenue: 0, recent: 0 };
+      salesMap[n].units += item.quantity;
+      salesMap[n].revenue += item.totalPrice;
+      if (new Date(inv.invoiceDate) >= thirtyDaysAgo) salesMap[n].recent += item.quantity;
+    }
+  }
+  const topProducts = Object.values(salesMap).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
 
-  // ── Low stock ──
-  const lowStock = products
-    .filter(p => p.currentStock <= p.reorderLevel)
-    .map(p => ({ name: p.name, currentStock: p.currentStock, minStock: p.minStock, reorderLevel: p.reorderLevel, price: p.price }))
-    .sort((a, b) => a.currentStock - b.currentStock);
-
-  // ── Inactive clients ──
-  const inactiveClients = clients
-    .filter(c => {
-      if (c.invoices.length === 0) return true;
-      const last = new Date(Math.max(...c.invoices.map(i => new Date(i.invoiceDate).getTime())));
-      return last < sixtyDaysAgo;
-    })
-    .map(c => ({ name: c.name, type: c.type, invoiceCount: c.invoices.length }));
-
-  // ── Full data for AI ──
-  const allProductDetails = products.map(p => ({
-    name: p.name,
-    genericName: p.genericName ?? 'N/A',
-    type: p.type,
-    category: p.category ?? 'N/A',
-    batchNumber: p.batchNumber,
-    unit: p.unit,
-    manufacturer: p.manufacturer?.name ?? 'Unknown',
-    manufacturerCompany: p.manufacturer?.motherCompany ?? 'N/A',
-    currentStock: p.currentStock,
-    initialStock: p.initialStock,
-    minStock: p.minStock,
-    reorderLevel: p.reorderLevel,
-    price: p.price,
-    expiryDate: new Date(p.expiryDate).toLocaleDateString('en-GB'),
-    daysUntilExpiry: Math.ceil((new Date(p.expiryDate).getTime() - now.getTime()) / 86400000),
-    stockValue: p.price * p.currentStock,
-    totalUnitsSold: p.invoiceItems.reduce((s, i) => s + i.quantity, 0),
-    totalRevenue: p.invoiceItems.reduce((s, i) => s + i.totalPrice, 0),
-    totalReturns: p.returns.length,
-  }));
-
-  const allClientDetails = clients.map(c => {
+  // Client stats
+  const clientStats = clients.map(c => {
     const paid = c.invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
     const unpaid = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s, i) => s + i.total, 0);
-    const overdue = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED' && new Date(i.dueDate) < now);
-    const lastOrder = c.invoices.length > 0
-      ? new Date(Math.max(...c.invoices.map(i => new Date(i.invoiceDate).getTime()))).toLocaleDateString('en-GB')
-      : 'Never';
-    const productsBought = [...new Set(c.invoices.flatMap(i => i.items.map(item => item.product?.name)).filter(Boolean))];
-    return {
-      name: c.name, type: c.type,
-      phone: c.phone ?? 'N/A', email: c.email ?? 'N/A',
-      address: c.address ?? 'N/A', company: c.company ?? 'N/A',
-      creditLimit: c.creditLimit ?? 0,
-      totalPaid: paid, totalUnpaid: unpaid,
-      invoiceCount: c.invoices.length, overdueCount: overdue.length,
-      lastOrderDate: lastOrder,
-      productsBought: productsBought.slice(0, 30),
-      recentInvoices: c.invoices.slice(0, 5).map(i => ({
-        number: i.invoiceNumber, status: i.status,
-        total: i.total, date: new Date(i.invoiceDate).toLocaleDateString('en-GB'),
-        dueDate: new Date(i.dueDate).toLocaleDateString('en-GB'),
-        amountPaid: i.payments.reduce((s, p) => s + p.amount, 0),
-      })),
-    };
-  });
+    const overdue = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED' && new Date(i.dueDate) < now2).length;
+    const recent = c.invoices.filter(i => new Date(i.invoiceDate) >= thirtyDaysAgo).length;
+    const lastDate = c.invoices.length > 0 ? new Date(Math.max(...c.invoices.map(i => new Date(i.invoiceDate).getTime()))).toLocaleDateString('en-GB') : 'Never';
+    const products = [...new Set(c.invoices.flatMap(i => i.items.map(it => it.product?.name)).filter(Boolean))];
+    return { name: c.name, type: c.type, phone: c.phone ?? 'N/A', email: c.email ?? 'N/A', address: c.address ?? 'N/A', paid, unpaid, invoices: c.invoices.length, overdue, recent, lastOrder: lastDate, products: products.slice(0, 15) };
+  }).sort((a, b) => b.paid - a.paid);
 
-  const allInvoiceDetails = invoices.slice(0, 150).map(inv => ({
-    number: inv.invoiceNumber,
-    client: inv.client?.name,
-    clientType: inv.client?.type,
-    clientPhone: inv.client?.phone ?? 'N/A',
-    status: inv.status,
-    subTotal: inv.subTotal,
-    tax: inv.tax,
-    total: inv.total,
-    notes: inv.notes ?? '',
-    hasReturns: inv.hasReturns,
-    date: new Date(inv.invoiceDate).toLocaleDateString('en-GB'),
-    dueDate: new Date(inv.dueDate).toLocaleDateString('en-GB'),
-    amountPaid: inv.payments.reduce((s, p) => s + p.amount, 0),
-    paymentMethods: [...new Set(inv.payments.map(p => p.method))].join(', '),
-    items: inv.items.map(item => `${item.product?.name ?? 'Unknown'} x${item.quantity} @ K${item.unitPrice} = K${item.totalPrice}${item.freeSamples > 0 ? ` (+${item.freeSamples} free)` : ''}`),
-  }));
+  // Low stock & expiry
+  const lowStock = products.filter(p => p.currentStock <= p.reorderLevel).map(p => ({ name: p.name, current: p.currentStock, min: p.minStock, reorder: p.reorderLevel, price: p.price })).sort((a, b) => a.current - b.current);
+  const expiryRisk = products.map(p => ({ name: p.name, days: Math.ceil((new Date(p.expiryDate).getTime() - now2.getTime()) / 86400000), stock: p.currentStock, value: p.price * p.currentStock })).filter(p => p.days <= 180).sort((a, b) => a.days - b.days);
 
-  const allExpenses = expenses.map(e => ({
-    description: e.description,
-    category: e.category,
-    amount: e.amount,
-    date: new Date(e.date).toLocaleDateString('en-GB'),
-  }));
+  // Inactive clients
+  const inactive = clients.filter(c => {
+    if (c.invoices.length === 0) return true;
+    return new Date(Math.max(...c.invoices.map(i => new Date(i.invoiceDate).getTime()))) < sixtyDaysAgo;
+  }).map(c => ({ name: c.name, type: c.type, count: c.invoices.length }));
 
-  const allReturns = returns_.map(r => ({
-    product: r.product?.name,
-    productType: r.product?.type,
-    quantity: r.quantity,
-    reason: r.reason,
-    invoice: r.invoice?.invoiceNumber,
-    client: r.invoice?.client?.name ?? 'N/A',
-    date: new Date(r.returnDate).toLocaleDateString('en-GB'),
-  }));
-
-  const manufacturerDetails = manufacturers.map(m => ({
-    name: m.name,
-    motherCompany: m.motherCompany ?? 'N/A',
-    contactPerson: m.contactPerson ?? 'N/A',
-    phone: m.phone ?? 'N/A',
-    email: m.email ?? 'N/A',
-    location: m.location ?? 'N/A',
-    address: m.address ?? 'N/A',
-    productCount: m.products.length,
-    totalStockValue: m.products.reduce((s, p) => s + p.price * p.currentStock, 0),
-    products: m.products.map(p => `${p.name} (${p.type}) - ${p.currentStock} units @ K${p.price}`),
-  }));
-
-  const systemSettings = Object.fromEntries(settings.map(s => [s.key, s.value]));
-
-  const expensesByCategory = expenses.reduce((acc: Record<string, number>, e) => {
-    acc[e.category] = (acc[e.category] ?? 0) + e.amount;
-    return acc;
-  }, {});
+  // Expense categories
+  const expCats: Record<string, number> = {};
+  expenses.forEach(e => { expCats[e.category] = (expCats[e.category] ?? 0) + e.amount; });
 
   return {
     summary: {
       totalRevenue, monthRevenue, pendingValue, overdueValue,
       totalExpenses, netProfit: totalRevenue - totalExpenses,
-      profitMargin: totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1) + '%' : '0%',
-      totalClients: clients.length, totalProducts: products.length,
-      totalInvoices: invoices.length,
-      paidInvoices: invoices.filter(i => i.status === 'PAID').length,
-      pendingInvoices: invoices.filter(i => i.status === 'PENDING').length,
-      overdueInvoices: invoices.filter(i => i.status === 'OVERDUE').length,
-      cancelledInvoices: invoices.filter(i => i.status === 'CANCELLED').length,
-      totalReturns: returns_.length,
-      totalManufacturers: manufacturers.length,
-      totalUsers: users.length,
-      totalStockValue: products.reduce((s, p) => s + p.price * p.currentStock, 0),
+      margin: totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1) + '%' : '0%',
+      clients: clients.length, products: products.length,
+      invoices: invoices.length,
+      paid: invoices.filter(i => i.status === 'PAID').length,
+      pending: invoices.filter(i => i.status === 'PENDING').length,
+      overdue: invoices.filter(i => i.status === 'OVERDUE').length,
+      returns: returns_.length,
+      stockValue: products.reduce((s, p) => s + p.price * p.currentStock, 0),
     },
     topProducts,
-    clientStats: clientStats.slice(0, 10),
-    expiryRisk,
+    clientStats,
     lowStock,
-    inactiveClients,
-    recentExpenses: expenses.slice(0, 10).map(e => ({ description: e.description, amount: e.amount, category: e.category, date: e.date })),
-    allProductDetails,
-    allClientDetails,
-    allInvoiceDetails,
-    allExpenses,
-    allReturns,
-    manufacturerDetails,
-    systemSettings,
-    expensesByCategory,
-    users: users.map(u => ({ name: u.name, email: u.email, role: u.role, isActive: u.isActive, lastLogin: u.lastLoginAt?.toLocaleDateString('en-GB') ?? 'Never' })),
+    expiryRisk,
+    inactive,
+    expCats,
+    recentInvoices: invoices.slice(0, 50).map(i => ({
+      number: i.invoiceNumber, client: i.client?.name, type: i.client?.type,
+      status: i.status, total: i.total,
+      paid: i.payments.reduce((s, p) => s + p.amount, 0),
+      date: new Date(i.invoiceDate).toLocaleDateString('en-GB'),
+      due: new Date(i.dueDate).toLocaleDateString('en-GB'),
+    })),
+    allProducts: products.map(p => ({
+      name: p.name, generic: p.genericName ?? '', type: p.type,
+      category: p.category ?? '', manufacturer: p.manufacturer?.name ?? '',
+      batch: p.batchNumber, stock: p.currentStock, initial: p.initialStock,
+      min: p.minStock, reorder: p.reorderLevel, price: p.price, unit: p.unit,
+      expiry: new Date(p.expiryDate).toLocaleDateString('en-GB'),
+      daysLeft: Math.ceil((new Date(p.expiryDate).getTime() - now2.getTime()) / 86400000),
+      stockValue: p.price * p.currentStock,
+      sold: p.invoiceItems.reduce((s, i) => s + i.quantity, 0),
+      revenue: p.invoiceItems.reduce((s, i) => s + i.totalPrice, 0),
+      returns: p.returns.length,
+    })),
+    allExpenses: expenses.map(e => ({ desc: e.description, cat: e.category, amount: e.amount, date: new Date(e.date).toLocaleDateString('en-GB') })),
+    allReturns: returns_.map(r => ({ product: r.product?.name, qty: r.quantity, reason: r.reason, client: r.invoice?.client?.name ?? 'N/A', invoice: r.invoice?.invoiceNumber, date: new Date(r.returnDate).toLocaleDateString('en-GB') })),
+    manufacturers: manufacturers.map(m => ({ name: m.name, parent: m.motherCompany ?? '', contact: m.contactPerson ?? '', phone: m.phone ?? '', location: m.location ?? '', products: m.products.length, stockValue: m.products.reduce((s, p) => s + p.price * p.currentStock, 0) })),
   };
 }
 
-async function callGroqAI(systemPrompt: string, userMessage: string): Promise<string> {
-  if (!process.env.GROQ_API_KEY) throw new Error('GROQ_API_KEY not set in .env');
-
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+async function callGroq(system: string, user: string): Promise<string> {
+  if (!process.env.GROQ_API_KEY) throw new Error('GROQ_API_KEY not set');
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
     body: JSON.stringify({
       model: 'llama-3.1-8b-instant',
-      max_tokens: 1500,
+      max_tokens: 800,
       temperature: 0.3,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
+      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     }),
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Groq API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content ?? 'No response from AI';
+  if (!res.ok) throw new Error(`Groq API error: ${res.status} - ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? 'No response';
 }
 
 export async function POST(request: NextRequest) {
@@ -317,168 +159,137 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { type, query } = body;
 
-    const data = await getBusinessSnapshot();
+    const d = await getBusinessSnapshot();
 
-    const BASE_SYSTEM = `You are an AI business analyst embedded inside Glorious Pharma's management system.
-You have access to real, live business data. Be specific, use actual numbers from the data provided.
-Always respond in plain English — no markdown headers, no bullet symbols, write in clear paragraphs or short numbered lists.
-Currency is ZMW (Zambian Kwacha). Today's date is ${new Date().toLocaleDateString('en-GB')}.
-Be concise, practical, and direct. Speak like a trusted advisor, not a report generator.
-Company settings: ${JSON.stringify(data.systemSettings)}`;
+    const BASE = `You are an AI analyst for Glorious Pharma (Zambia). Use real data provided. Be specific with names and numbers. Write in plain English, no markdown. Currency is ZMW. Today: ${new Date().toLocaleDateString('en-GB')}.`;
 
-    const FULL_DATA_CONTEXT = `
-=== FINANCIAL SUMMARY ===
-Total revenue (all time): ZMW ${data.summary.totalRevenue.toFixed(2)}
-Revenue this month: ZMW ${data.summary.monthRevenue.toFixed(2)}
-Total expenses: ZMW ${data.summary.totalExpenses.toFixed(2)}
-Net profit: ZMW ${data.summary.netProfit.toFixed(2)} (margin: ${data.summary.profitMargin})
-Pending invoices: ZMW ${data.summary.pendingValue.toFixed(2)} (${data.summary.pendingInvoices} invoices)
-Overdue invoices: ZMW ${data.summary.overdueValue.toFixed(2)} (${data.summary.overdueInvoices} invoices)
-Cancelled invoices: ${data.summary.cancelledInvoices}
-Total stock value: ZMW ${data.summary.totalStockValue.toFixed(2)}
-Total returns: ${data.summary.totalReturns}
-
-=== EXPENSES BY CATEGORY ===
-${Object.entries(data.expensesByCategory).map(([cat, amt]) => `${cat}: ZMW ${(amt as number).toFixed(2)}`).join('\n')}
-
-=== ALL PRODUCTS (${data.summary.totalProducts} total) ===
-${data.allProductDetails.map(p => `${p.name} | Generic: ${p.genericName} | ${p.type} | Category: ${p.category} | Batch: ${p.batchNumber} | Mfr: ${p.manufacturer} (${p.manufacturerCompany}) | Stock: ${p.currentStock}/${p.initialStock} units | Min: ${p.minStock} | Reorder at: ${p.reorderLevel} | Price: K${p.price} | Unit: ${p.unit} | Expires: ${p.expiryDate} (${p.daysUntilExpiry} days) | Stock value: K${p.stockValue.toFixed(2)} | Units sold: ${p.totalUnitsSold} | Sales revenue: K${p.totalRevenue.toFixed(2)} | Returns: ${p.totalReturns}`).join('\n')}
-
-=== ALL CLIENTS (${data.summary.totalClients} total) ===
-${data.allClientDetails.map(c => `${c.name} | ${c.type} | Company: ${c.company} | Phone: ${c.phone} | Email: ${c.email} | Address: ${c.address} | Credit limit: K${c.creditLimit} | Total paid: K${c.totalPaid.toFixed(2)} | Outstanding: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate} | Products bought: ${c.productsBought.join(', ')}`).join('\n')}
-
-=== ALL MANUFACTURERS (${data.summary.totalManufacturers} total) ===
-${data.manufacturerDetails.map(m => `${m.name} | Parent: ${m.motherCompany} | Contact: ${m.contactPerson} | Phone: ${m.phone} | Location: ${m.location} | Products: ${m.productCount} | Stock value: K${m.totalStockValue.toFixed(2)} | Products list: ${m.products.join('; ')}`).join('\n')}
-
-=== LOW STOCK ALERTS ===
-${data.lowStock.length === 0 ? 'None' : data.lowStock.map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel}, min ${p.minStock}) @ K${p.price}`).join('\n')}
-
-=== EXPIRY RISK (within 180 days) ===
-${data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.map(p => `${p.name}: ${p.daysLeft} days left, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('\n')}
-
-=== RECENT INVOICES (last 150) ===
-${data.allInvoiceDetails.map(i => `${i.number} | ${i.client} (${i.clientType}) | ${i.status} | K${i.total.toFixed(2)} | Paid: K${i.amountPaid.toFixed(2)} | ${i.date} | Due: ${i.dueDate} | Payment: ${i.paymentMethods} | Items: ${i.items.join(', ')}`).join('\n')}
-
-=== ALL EXPENSES ===
-${data.allExpenses.map(e => `${e.date} | ${e.category} | ${e.description}: K${e.amount.toFixed(2)}`).join('\n')}
-
-=== ALL RETURNS ===
-${data.allReturns.length === 0 ? 'None' : data.allReturns.map(r => `${r.date} | ${r.product} (${r.productType}) x${r.quantity} | Reason: ${r.reason} | Client: ${r.client} | Invoice: ${r.invoice}`).join('\n')}
-
-=== SYSTEM USERS ===
-${data.users.map(u => `${u.name} | ${u.role} | ${u.email} | Active: ${u.isActive} | Last login: ${u.lastLogin}`).join('\n')}
-
-=== INACTIVE CLIENTS (60+ days no orders) ===
-${data.inactiveClients.length === 0 ? 'None' : data.inactiveClients.map(c => `${c.name} (${c.type}), ${c.invoiceCount} past invoices`).join('\n')}`;
+    const FIN = `Revenue: K${d.summary.totalRevenue.toFixed(2)} total, K${d.summary.monthRevenue.toFixed(2)} this month. Profit: K${d.summary.netProfit.toFixed(2)} (${d.summary.margin}). Pending: K${d.summary.pendingValue.toFixed(2)}. Overdue: K${d.summary.overdueValue.toFixed(2)}. Stock value: K${d.summary.stockValue.toFixed(2)}. Clients: ${d.summary.clients}. Products: ${d.summary.products}. Returns: ${d.summary.returns}.`;
 
     let aiResponse = '';
 
     if (type === 'insights') {
-      aiResponse = await callGroqAI(BASE_SYSTEM, `Here is the full business snapshot for Glorious Pharma:
-${FULL_DATA_CONTEXT}
+      const msg = `${FIN}
 
-Give 4 to 6 sharp, specific business insights and action recommendations based on this real data. Focus on the most important things that need attention right now. Be specific with names and numbers.`);
+Top products: ${d.topProducts.map((p, i) => `${i + 1}. ${p.name}: ${p.units} units, K${p.revenue.toFixed(2)}`).join('; ')}
+
+Top clients: ${d.clientStats.slice(0, 5).map((c, i) => `${i + 1}. ${c.name}: K${c.paid.toFixed(2)} paid, ${c.overdue} overdue`).join('; ')}
+
+Low stock (${d.lowStock.length}): ${d.lowStock.slice(0, 5).map(p => `${p.name} ${p.current}u`).join(', ')}
+
+Expiry risk (${d.expiryRisk.length}): ${d.expiryRisk.slice(0, 5).map(p => `${p.name} ${p.days}d`).join(', ')}
+
+Inactive clients: ${d.inactive.slice(0, 5).map(c => c.name).join(', ')}
+
+Give 5 specific business insights and actions based on this data.`;
+      aiResponse = await callGroq(BASE, msg);
     }
 
     else if (type === 'inventory') {
-      aiResponse = await callGroqAI(BASE_SYSTEM, `Analyse the inventory situation for Glorious Pharma:
-${FULL_DATA_CONTEXT}
+      const msg = `${FIN}
 
-Give a clear inventory action plan. Which products need urgent restocking? Which near-expiry products should be discounted or prioritised for sale? What is the total value at risk from expiring stock?`);
+Low stock: ${d.lowStock.length === 0 ? 'None' : d.lowStock.map(p => `${p.name}: ${p.current} units (reorder at ${p.reorder})`).join('; ')}
+
+Expiry risk: ${d.expiryRisk.length === 0 ? 'None' : d.expiryRisk.map(p => `${p.name}: ${p.days} days, ${p.stock} units, K${p.value.toFixed(2)} at risk`).join('; ')}
+
+Top sellers this month: ${d.topProducts.slice(0, 5).map(p => `${p.name}: ${p.recent} units`).join('; ')}
+
+Give a clear inventory action plan with urgent restocking needs and expiry risk management.`;
+      aiResponse = await callGroq(BASE, msg);
     }
 
     else if (type === 'clients') {
-      aiResponse = await callGroqAI(BASE_SYSTEM, `Analyse client risk and opportunities for Glorious Pharma:
-${FULL_DATA_CONTEXT}
+      const highRisk = d.clientStats.filter(c => c.overdue > 0 || c.unpaid > 0);
+      const msg = `${FIN}
 
-Provide: (1) which high-risk clients need immediate action and what action, (2) which inactive clients are worth re-engaging and how, (3) which top clients could be upsold or given loyalty benefits.`);
+High risk clients: ${highRisk.slice(0, 8).map(c => `${c.name}: K${c.unpaid.toFixed(2)} outstanding, ${c.overdue} overdue invoices`).join('; ')}
+
+Top clients: ${d.clientStats.slice(0, 8).map((c, i) => `${i + 1}. ${c.name} (${c.type}): K${c.paid.toFixed(2)} paid, ${c.invoices} invoices, last order ${c.lastOrder}`).join('; ')}
+
+Inactive 60+ days: ${d.inactive.length === 0 ? 'None' : d.inactive.map(c => `${c.name} (${c.type})`).join(', ')}
+
+Give client risk assessment and re-engagement recommendations.`;
+      aiResponse = await callGroq(BASE, msg);
     }
 
     else if (type === 'financial') {
-      aiResponse = await callGroqAI(BASE_SYSTEM, `Provide a full financial health analysis for Glorious Pharma:
-${FULL_DATA_CONTEXT}
+      const expList = Object.entries(d.expCats).map(([cat, amt]) => `${cat}: K${(amt as number).toFixed(2)}`).join('; ');
+      const msg = `${FIN}
 
-Analyse the financial health. Is the profit margin healthy? What is the overdue collection risk? Are there expense patterns worth noting? What should management focus on to improve profitability?`);
+Invoices: ${d.summary.paid} paid, ${d.summary.pending} pending, ${d.summary.overdue} overdue.
+
+Expenses by category: ${expList}
+
+Recent expenses: ${d.allExpenses.slice(0, 10).map(e => `${e.cat}: K${e.amount.toFixed(2)}`).join('; ')}
+
+Analyse financial health, profit margin, overdue risk, and give improvement recommendations.`;
+      aiResponse = await callGroq(BASE, msg);
     }
 
     else if (type === 'chat' && query) {
       const q = query.toLowerCase();
+      const parts: string[] = [FIN];
 
-      // Always include tight financial summary (stays under token limit)
-      const fin = `FINANCIALS: Revenue ZMW ${data.summary.totalRevenue.toFixed(2)} | This month ZMW ${data.summary.monthRevenue.toFixed(2)} | Profit ZMW ${data.summary.netProfit.toFixed(2)} (${data.summary.profitMargin}) | Pending ZMW ${data.summary.pendingValue.toFixed(2)} | Overdue ZMW ${data.summary.overdueValue.toFixed(2)} | Stock value ZMW ${data.summary.totalStockValue.toFixed(2)} | Clients: ${data.summary.totalClients} | Products: ${data.summary.totalProducts} | Returns: ${data.summary.totalReturns}`;
-
-      let sections: string[] = [fin];
-
-      if (q.includes('client') || q.includes('customer') || q.includes('pharmacy') || q.includes('hospital') || q.includes('who') || q.includes('top') || q.includes('best')) {
-        sections.push('TOP CLIENTS:\n' + data.clientStats.slice(0, 10).map((c, i) => `${i+1}. ${c.name} (${c.type}): paid K${c.totalPaid.toFixed(2)}, outstanding K${c.totalUnpaid.toFixed(2)}, ${c.invoiceCount} invoices, ${c.overdueCount} overdue, ${c.recentOrders} orders this month`).join('\n'));
+      if (q.match(/client|customer|pharmacy|hospital|who|buyer/)) {
+        parts.push('CLIENTS: ' + d.clientStats.slice(0, 15).map(c => `${c.name}(${c.type}) paid K${c.paid.toFixed(2)} unpaid K${c.unpaid.toFixed(2)} invoices:${c.invoices} overdue:${c.overdue} last:${c.lastOrder}`).join(' | '));
+      }
+      if (q.match(/product|stock|medicine|drug|item|inventory|tablet|capsule|syrup|injection/)) {
+        parts.push('PRODUCTS: ' + d.allProducts.slice(0, 30).map(p => `${p.name}(${p.type}) stock:${p.stock} price:K${p.price} exp:${p.expiry}(${p.daysLeft}d) sold:${p.sold} rev:K${p.revenue.toFixed(2)}`).join(' | '));
+      }
+      if (q.match(/top|best|most|highest|leading/)) {
+        parts.push('TOP PRODUCTS: ' + d.topProducts.map((p, i) => `${i + 1}.${p.name} ${p.units}units K${p.revenue.toFixed(2)} ${p.recent}this month`).join(' | '));
+        parts.push('TOP CLIENTS: ' + d.clientStats.slice(0, 8).map((c, i) => `${i + 1}.${c.name} K${c.paid.toFixed(2)} ${c.invoices}invoices`).join(' | '));
+      }
+      if (q.match(/expir/)) {
+        parts.push('EXPIRY: ' + (d.expiryRisk.length === 0 ? 'None' : d.expiryRisk.slice(0, 15).map(p => `${p.name} ${p.days}days ${p.stock}units K${p.value.toFixed(2)}`).join(' | ')));
+      }
+      if (q.match(/low stock|reorder|shortage|running out/)) {
+        parts.push('LOW STOCK: ' + (d.lowStock.length === 0 ? 'None' : d.lowStock.slice(0, 15).map(p => `${p.name} ${p.current}units reorder@${p.reorder}`).join(' | ')));
+      }
+      if (q.match(/invoice|order|sale|payment|paid|overdue|pending/)) {
+        parts.push('INVOICES: ' + d.recentInvoices.slice(0, 20).map(i => `${i.number} ${i.client} ${i.status} K${i.total.toFixed(2)} ${i.date}`).join(' | '));
+      }
+      if (q.match(/expense|cost|spending/)) {
+        parts.push('EXPENSES: ' + Object.entries(d.expCats).map(([c, a]) => `${c}:K${(a as number).toFixed(2)}`).join(' | '));
+      }
+      if (q.match(/return|refund/)) {
+        parts.push('RETURNS: ' + (d.allReturns.length === 0 ? 'None' : d.allReturns.slice(0, 10).map(r => `${r.product} x${r.qty} ${r.reason} ${r.client}`).join(' | ')));
+      }
+      if (q.match(/manufacturer|supplier|vendor/)) {
+        parts.push('MANUFACTURERS: ' + d.manufacturers.map(m => `${m.name}(${m.parent}) ${m.products}products K${m.stockValue.toFixed(2)}`).join(' | '));
+      }
+      if (q.match(/inactive|not ordered|lost/)) {
+        parts.push('INACTIVE: ' + (d.inactive.length === 0 ? 'None' : d.inactive.map(c => `${c.name}(${c.type}) ${c.count}invoices`).join(' | ')));
       }
 
-      if (q.includes('product') || q.includes('stock') || q.includes('medicine') || q.includes('top') || q.includes('best') || q.includes('selling')) {
-        sections.push('TOP PRODUCTS:\n' + data.topProducts.map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units sold, K${p.revenue.toFixed(2)} revenue, ${p.recentUnits} units this month`).join('\n'));
+      // Fallback if no keyword matched
+      if (parts.length === 1) {
+        parts.push('TOP CLIENTS: ' + d.clientStats.slice(0, 8).map((c, i) => `${i + 1}.${c.name} K${c.paid.toFixed(2)} ${c.invoices}inv`).join(' | '));
+        parts.push('TOP PRODUCTS: ' + d.topProducts.slice(0, 8).map((p, i) => `${i + 1}.${p.name} ${p.units}units K${p.revenue.toFixed(2)}`).join(' | '));
       }
 
-      if (q.includes('low stock') || q.includes('reorder') || q.includes('running out') || q.includes('shortage')) {
-        sections.push('LOW STOCK:\n' + (data.lowStock.length === 0 ? 'None' : data.lowStock.slice(0, 15).map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('\n')));
-      }
-
-      if (q.includes('expir')) {
-        sections.push('EXPIRY RISK:\n' + (data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.slice(0, 15).map(p => `${p.name}: ${p.daysLeft} days, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('\n')));
-      }
-
-      if (q.includes('invoice') || q.includes('overdue') || q.includes('pending') || q.includes('paid') || q.includes('payment')) {
-        sections.push('RECENT INVOICES (last 20):\n' + data.allInvoiceDetails.slice(0, 20).map(i => `${i.number} | ${i.client} | ${i.status} | K${i.total.toFixed(2)} | ${i.date} | Due: ${i.dueDate}`).join('\n'));
-      }
-
-      if (q.includes('expense') || q.includes('cost') || q.includes('spending')) {
-        sections.push('EXPENSES BY CATEGORY:\n' + Object.entries(data.expensesByCategory).map(([cat, amt]) => `${cat}: K${(amt as number).toFixed(2)}`).join('\n'));
-      }
-
-      if (q.includes('return') || q.includes('refund')) {
-        sections.push('RETURNS:\n' + (data.allReturns.length === 0 ? 'None' : data.allReturns.slice(0, 10).map(r => `${r.product} x${r.quantity} | ${r.reason} | ${r.client} | ${r.date}`).join('\n')));
-      }
-
-      if (q.includes('manufacturer') || q.includes('supplier')) {
-        sections.push('MANUFACTURERS:\n' + data.manufacturerDetails.map(m => `${m.name} (${m.motherCompany}): ${m.productCount} products, stock value K${m.totalStockValue.toFixed(2)}`).join('\n'));
-      }
-
-      if (q.includes('inactive') || q.includes('not ordered') || q.includes('lost')) {
-        sections.push('INACTIVE CLIENTS (60+ days):\n' + (data.inactiveClients.length === 0 ? 'None' : data.inactiveClients.map(c => `${c.name} (${c.type}), ${c.invoiceCount} past invoices`).join('\n')));
-      }
-
-      // If only financials matched, add top clients and products as fallback
-      if (sections.length === 1) {
-        sections.push('TOP CLIENTS:\n' + data.clientStats.slice(0, 8).map((c, i) => `${i+1}. ${c.name}: K${c.totalPaid.toFixed(2)} paid, ${c.invoiceCount} invoices`).join('\n'));
-        sections.push('TOP PRODUCTS:\n' + data.topProducts.slice(0, 8).map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units, K${p.revenue.toFixed(2)}`).join('\n'));
-      }
-
-      const context = sections.join('\n\n');
-
-      aiResponse = await callGroqAI(
-        `${BASE_SYSTEM}\n\nLive Glorious Pharma data:\n${context}\n\nAnswer using only this data. Be specific with names and numbers.`,
-        query
-      );
+      aiResponse = await callGroq(BASE + '\n\nData:\n' + parts.join('\n'), query);
     }
 
     else {
-      return NextResponse.json({ error: 'Invalid type. Use: insights, inventory, clients, financial, chat' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
     }
 
     return NextResponse.json({
       success: true,
       response: aiResponse,
       dataSnapshot: {
-        totalRevenue: data.summary.totalRevenue,
-        monthRevenue: data.summary.monthRevenue,
-        pendingValue: data.summary.pendingValue,
-        overdueValue: data.summary.overdueValue,
-        netProfit: data.summary.netProfit,
-        lowStockCount: data.lowStock.length,
-        expiryRiskCount: data.expiryRisk.filter(p => p.daysLeft <= 30).length,
-        topProducts: data.topProducts.slice(0, 5),
-        clientStats: data.clientStats.slice(0, 5),
-        lowStock: data.lowStock.slice(0, 5),
-        expiryRisk: data.expiryRisk.slice(0, 5),
-        inactiveClients: data.inactiveClients,
+        totalRevenue: d.summary.totalRevenue,
+        monthRevenue: d.summary.monthRevenue,
+        pendingValue: d.summary.pendingValue,
+        overdueValue: d.summary.overdueValue,
+        netProfit: d.summary.netProfit,
+        lowStockCount: d.lowStock.length,
+        expiryRiskCount: d.expiryRisk.filter(p => p.days <= 30).length,
+        topProducts: d.topProducts.slice(0, 5),
+        clientStats: d.clientStats.slice(0, 5).map(c => ({ name: c.name, type: c.type, totalPaid: c.paid, totalUnpaid: c.unpaid, overdueCount: c.overdue, invoiceCount: c.invoices })),
+        lowStock: d.lowStock.slice(0, 5).map(p => ({ name: p.name, currentStock: p.current, reorderLevel: p.reorder })),
+        expiryRisk: d.expiryRisk.slice(0, 5).map(p => ({ name: p.name, daysLeft: p.days, currentStock: p.stock })),
+        inactiveClients: d.inactive,
       },
     });
 
