@@ -402,13 +402,117 @@ Analyse the financial health. Is the profit margin healthy? What is the overdue 
     }
 
     else if (type === 'chat' && query) {
+      const q = query.toLowerCase();
+
+      // Pick only relevant sections based on the question
+      let relevantData = `
+=== FINANCIAL SUMMARY ===
+Total revenue: ZMW ${data.summary.totalRevenue.toFixed(2)} | This month: ZMW ${data.summary.monthRevenue.toFixed(2)}
+Net profit: ZMW ${data.summary.netProfit.toFixed(2)} (${data.summary.profitMargin})
+Pending: ZMW ${data.summary.pendingValue.toFixed(2)} (${data.summary.pendingInvoices} invoices)
+Overdue: ZMW ${data.summary.overdueValue.toFixed(2)} (${data.summary.overdueInvoices} invoices)
+Total stock value: ZMW ${data.summary.totalStockValue.toFixed(2)}
+Clients: ${data.summary.totalClients} | Products: ${data.summary.totalProducts} | Returns: ${data.summary.totalReturns}
+`;
+
+      if (q.includes('client') || q.includes('customer') || q.includes('pharmacy') || q.includes('hospital') || q.includes('who')) {
+        relevantData += `
+=== ALL CLIENTS ===
+${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone} | Paid: K${c.totalPaid.toFixed(2)} | Outstanding: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate}`).join('
+')}`;
+      }
+
+      if (q.includes('product') || q.includes('stock') || q.includes('medicine') || q.includes('drug') || q.includes('item') || q.includes('inventory')) {
+        relevantData += `
+=== ALL PRODUCTS ===
+${data.allProductDetails.map(p => `${p.name} | ${p.type} | Stock: ${p.currentStock} units | Price: K${p.price} | Expires: ${p.expiryDate} (${p.daysUntilExpiry} days) | Sold: ${p.totalUnitsSold} units | Revenue: K${p.totalRevenue.toFixed(2)}`).join('
+')}`;
+      }
+
+      if (q.includes('expir') || q.includes('expire') || q.includes('expiry')) {
+        relevantData += `
+=== EXPIRY RISK ===
+${data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.map(p => `${p.name}: ${p.daysLeft} days left, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('
+')}`;
+      }
+
+      if (q.includes('low stock') || q.includes('reorder') || q.includes('running out') || q.includes('shortage')) {
+        relevantData += `
+=== LOW STOCK ===
+${data.lowStock.length === 0 ? 'None' : data.lowStock.map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('
+')}`;
+      }
+
+      if (q.includes('invoice') || q.includes('order') || q.includes('sale') || q.includes('payment') || q.includes('paid') || q.includes('overdue') || q.includes('pending')) {
+        relevantData += `
+=== RECENT INVOICES (last 30) ===
+${data.allInvoiceDetails.slice(0, 30).map(i => `${i.number} | ${i.client} | ${i.status} | K${i.total.toFixed(2)} | ${i.date} | Due: ${i.dueDate} | Paid: K${i.amountPaid.toFixed(2)}`).join('
+')}`;
+      }
+
+      if (q.includes('expense') || q.includes('cost') || q.includes('spending') || q.includes('profit') || q.includes('margin') || q.includes('financial') || q.includes('revenue')) {
+        relevantData += `
+=== EXPENSES BY CATEGORY ===
+${Object.entries(data.expensesByCategory).map(([cat, amt]) => `${cat}: ZMW ${(amt as number).toFixed(2)}`).join('
+')}`;
+        relevantData += `
+=== RECENT EXPENSES ===
+${data.allExpenses.slice(0, 20).map(e => `${e.date} | ${e.category} | ${e.description}: K${e.amount.toFixed(2)}`).join('
+')}`;
+      }
+
+      if (q.includes('return') || q.includes('refund') || q.includes('sent back')) {
+        relevantData += `
+=== RETURNS ===
+${data.allReturns.length === 0 ? 'None' : data.allReturns.map(r => `${r.date} | ${r.product} x${r.quantity} | Reason: ${r.reason} | Client: ${r.client}`).join('
+')}`;
+      }
+
+      if (q.includes('manufacturer') || q.includes('supplier') || q.includes('vendor') || q.includes('pharco') || q.includes('supply')) {
+        relevantData += `
+=== MANUFACTURERS ===
+${data.manufacturerDetails.map(m => `${m.name} | ${m.motherCompany} | Location: ${m.location} | Products: ${m.productCount} | Stock value: K${m.totalStockValue.toFixed(2)}`).join('
+')}`;
+      }
+
+      if (q.includes('top') || q.includes('best') || q.includes('most') || q.includes('highest')) {
+        relevantData += `
+=== TOP PRODUCTS (by revenue) ===
+${data.topProducts.map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units sold, K${p.revenue.toFixed(2)} revenue, ${p.recentUnits} units this month`).join('
+')}`;
+        relevantData += `
+=== TOP CLIENTS (by revenue) ===
+${data.clientStats.map((c, i) => `${i+1}. ${c.name} (${c.type}): K${c.totalPaid.toFixed(2)} paid, ${c.invoiceCount} invoices, ${c.overdueCount} overdue`).join('
+')}`;
+      }
+
+      if (q.includes('inactive') || q.includes('not ordered') || q.includes('lost client') || q.includes('engage')) {
+        relevantData += `
+=== INACTIVE CLIENTS (60+ days) ===
+${data.inactiveClients.length === 0 ? 'None' : data.inactiveClients.map(c => `${c.name} (${c.type}), ${c.invoiceCount} past invoices`).join('
+')}`;
+      }
+
+      // If no specific keyword matched, add top products and clients as fallback
+      if (relevantData.split('
+').length < 15) {
+        relevantData += `
+=== TOP PRODUCTS ===
+${data.topProducts.map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units, K${p.revenue.toFixed(2)}`).join('
+')}`;
+        relevantData += `
+=== TOP CLIENTS ===
+${data.clientStats.slice(0, 10).map((c, i) => `${i+1}. ${c.name}: K${c.totalPaid.toFixed(2)} paid, ${c.invoiceCount} invoices`).join('
+')}`;
+      }
+
       aiResponse = await callGroqAI(
         `${BASE_SYSTEM}
 
-You have FULL access to all live Glorious Pharma business data:
-${FULL_DATA_CONTEXT}
+You have access to this live Glorious Pharma data:
+${relevantData}
 
-Answer the user question using this real data. Be specific with names and numbers. If asked about a specific product, client, invoice or manufacturer, find it in the data above and give exact details.`,
+Answer the user question using this real data. Be specific with names and numbers.`,
         query
       );
     }
