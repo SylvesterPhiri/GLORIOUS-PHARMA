@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/react';
 import AIFloatingChat from '@/components/AI/AIFloatingChat';
 import './globals.css';
 
@@ -15,9 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        
-          {children}
+        {children}
         <AIFloatingChat />
+        <Analytics /> 
       </body>
     </html>
   );
