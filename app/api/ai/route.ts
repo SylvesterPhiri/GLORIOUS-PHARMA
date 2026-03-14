@@ -482,8 +482,7 @@ ${data.inactiveClients.length === 0 ? 'None' : data.inactiveClients.map(c => `${
       }
 
       // If no specific keyword matched, add top products and clients as fallback
-      if (relevantData.split('
-').length < 15) {
+      if (relevantData.split('\n').length < 15) {
         relevantData += `
 === TOP PRODUCTS ===
 ${data.topProducts.map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units, K${p.revenue.toFixed(2)}`).join('\n')}`;
