@@ -404,22 +404,60 @@ Analyse the financial health. Is the profit margin healthy? What is the overdue 
     else if (type === 'chat' && query) {
       const q = query.toLowerCase();
 
-      // Pick only relevant sections based on the question
-      let relevantData = `
-=== FINANCIAL SUMMARY ===
-Total revenue: ZMW ${data.summary.totalRevenue.toFixed(2)} | This month: ZMW ${data.summary.monthRevenue.toFixed(2)}
-Net profit: ZMW ${data.summary.netProfit.toFixed(2)} (${data.summary.profitMargin})
-Pending: ZMW ${data.summary.pendingValue.toFixed(2)} (${data.summary.pendingInvoices} invoices)
-Overdue: ZMW ${data.summary.overdueValue.toFixed(2)} (${data.summary.overdueInvoices} invoices)
-Total stock value: ZMW ${data.summary.totalStockValue.toFixed(2)}
-Clients: ${data.summary.totalClients} | Products: ${data.summary.totalProducts} | Returns: ${data.summary.totalReturns}
-`;
+      // Always include tight financial summary (stays under token limit)
+      const fin = `FINANCIALS: Revenue ZMW ${data.summary.totalRevenue.toFixed(2)} | This month ZMW ${data.summary.monthRevenue.toFixed(2)} | Profit ZMW ${data.summary.netProfit.toFixed(2)} (${data.summary.profitMargin}) | Pending ZMW ${data.summary.pendingValue.toFixed(2)} | Overdue ZMW ${data.summary.overdueValue.toFixed(2)} | Stock value ZMW ${data.summary.totalStockValue.toFixed(2)} | Clients: ${data.summary.totalClients} | Products: ${data.summary.totalProducts} | Returns: ${data.summary.totalReturns}`;
 
-      if (q.includes('client') || q.includes('customer') || q.includes('pharmacy') || q.includes('hospital') || q.includes('who')) {
-        relevantData += `
-=== ALL CLIENTS ===
-${data.allClientDetails.map(c => `${c.name} | ${c.type} | Phone: ${c.phone} | Paid: K${c.totalPaid.toFixed(2)} | Outstanding: K${c.totalUnpaid.toFixed(2)} | Invoices: ${c.invoiceCount} | Overdue: ${c.overdueCount} | Last order: ${c.lastOrderDate}`).join('\n')}`;
+      let sections: string[] = [fin];
+
+      if (q.includes('client') || q.includes('customer') || q.includes('pharmacy') || q.includes('hospital') || q.includes('who') || q.includes('top') || q.includes('best')) {
+        sections.push('TOP CLIENTS:\n' + data.clientStats.slice(0, 10).map((c, i) => `${i+1}. ${c.name} (${c.type}): paid K${c.totalPaid.toFixed(2)}, outstanding K${c.totalUnpaid.toFixed(2)}, ${c.invoiceCount} invoices, ${c.overdueCount} overdue, ${c.recentOrders} orders this month`).join('\n'));
       }
+
+      if (q.includes('product') || q.includes('stock') || q.includes('medicine') || q.includes('top') || q.includes('best') || q.includes('selling')) {
+        sections.push('TOP PRODUCTS:\n' + data.topProducts.map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units sold, K${p.revenue.toFixed(2)} revenue, ${p.recentUnits} units this month`).join('\n'));
+      }
+
+      if (q.includes('low stock') || q.includes('reorder') || q.includes('running out') || q.includes('shortage')) {
+        sections.push('LOW STOCK:\n' + (data.lowStock.length === 0 ? 'None' : data.lowStock.slice(0, 15).map(p => `${p.name}: ${p.currentStock} units (reorder at ${p.reorderLevel})`).join('\n')));
+      }
+
+      if (q.includes('expir')) {
+        sections.push('EXPIRY RISK:\n' + (data.expiryRisk.length === 0 ? 'None' : data.expiryRisk.slice(0, 15).map(p => `${p.name}: ${p.daysLeft} days, ${p.currentStock} units, K${p.stockValue.toFixed(2)} at risk`).join('\n')));
+      }
+
+      if (q.includes('invoice') || q.includes('overdue') || q.includes('pending') || q.includes('paid') || q.includes('payment')) {
+        sections.push('RECENT INVOICES (last 20):\n' + data.allInvoiceDetails.slice(0, 20).map(i => `${i.number} | ${i.client} | ${i.status} | K${i.total.toFixed(2)} | ${i.date} | Due: ${i.dueDate}`).join('\n'));
+      }
+
+      if (q.includes('expense') || q.includes('cost') || q.includes('spending')) {
+        sections.push('EXPENSES BY CATEGORY:\n' + Object.entries(data.expensesByCategory).map(([cat, amt]) => `${cat}: K${(amt as number).toFixed(2)}`).join('\n'));
+      }
+
+      if (q.includes('return') || q.includes('refund')) {
+        sections.push('RETURNS:\n' + (data.allReturns.length === 0 ? 'None' : data.allReturns.slice(0, 10).map(r => `${r.product} x${r.quantity} | ${r.reason} | ${r.client} | ${r.date}`).join('\n')));
+      }
+
+      if (q.includes('manufacturer') || q.includes('supplier')) {
+        sections.push('MANUFACTURERS:\n' + data.manufacturerDetails.map(m => `${m.name} (${m.motherCompany}): ${m.productCount} products, stock value K${m.totalStockValue.toFixed(2)}`).join('\n'));
+      }
+
+      if (q.includes('inactive') || q.includes('not ordered') || q.includes('lost')) {
+        sections.push('INACTIVE CLIENTS (60+ days):\n' + (data.inactiveClients.length === 0 ? 'None' : data.inactiveClients.map(c => `${c.name} (${c.type}), ${c.invoiceCount} past invoices`).join('\n')));
+      }
+
+      // If only financials matched, add top clients and products as fallback
+      if (sections.length === 1) {
+        sections.push('TOP CLIENTS:\n' + data.clientStats.slice(0, 8).map((c, i) => `${i+1}. ${c.name}: K${c.totalPaid.toFixed(2)} paid, ${c.invoiceCount} invoices`).join('\n'));
+        sections.push('TOP PRODUCTS:\n' + data.topProducts.slice(0, 8).map((p, i) => `${i+1}. ${p.name}: ${p.unitsSold} units, K${p.revenue.toFixed(2)}`).join('\n'));
+      }
+
+      const context = sections.join('\n\n');
+
+      aiResponse = await callGroqAI(
+        `${BASE_SYSTEM}\n\nLive Glorious Pharma data:\n${context}\n\nAnswer using only this data. Be specific with names and numbers.`,
+        query
+      );
+    }
 
       if (q.includes('product') || q.includes('stock') || q.includes('medicine') || q.includes('drug') || q.includes('item') || q.includes('inventory')) {
         relevantData += `
