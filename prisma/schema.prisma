@@ -155,9 +155,10 @@ model Product {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  manufacturer Manufacturer  @relation(fields: [manufacturerId], references: [id])
-  invoiceItems InvoiceItem[]
-  returns      Return[]
+  manufacturer    Manufacturer     @relation(fields: [manufacturerId], references: [id])
+  invoiceItems    InvoiceItem[]
+  returns         Return[]
+  freeSampleItems FreeSampleItem[]
 
   @@map("products")
 }
@@ -237,4 +238,30 @@ model Return {
   product Product @relation(fields: [productId], references: [id])
 
   @@map("returns")
+}
+
+// ── Free Samples ──────────────────────────────────────────────────────────────
+model FreeSampleRecord {
+  id        String   @id @default(cuid())
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items FreeSampleItem[]
+
+  @@map("free_sample_records")
+}
+
+model FreeSampleItem {
+  id        String   @id @default(cuid())
+  recordId  String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  record  FreeSampleRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  product Product          @relation(fields: [productId], references: [id])
+
+  @@map("free_sample_items")
 }

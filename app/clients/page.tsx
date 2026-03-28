@@ -49,7 +49,7 @@ export default function ClientsPage() {
 
     try {
       await deleteClient(id);
-      await loadClients(); // Reload clients
+      await loadClients(); 
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete client');
     }

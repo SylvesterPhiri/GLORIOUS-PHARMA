@@ -1,0 +1,268 @@
+=== PAGES ===
+
+=== API ROUTES ===
+\app\api\accounting\expenses\route.ts
+\app\api\accounting\expenses\[id]\route.ts
+\app\api\accounting\route.ts
+\app\api\accounting\statements\route.ts
+\app\api\ai\route.ts
+\app\api\audit\route.ts
+\app\api\auth\login\route.ts
+\app\api\auth\logout\route.ts
+\app\api\auth\me\route.ts
+\app\api\clients\route.ts
+\app\api\clients\[id]\route.ts
+\app\api\invoices\historical\route.ts
+\app\api\invoices\route.ts
+\app\api\invoices\[id]\payments\route.ts.tsx
+\app\api\invoices\[id]\return\route.ts
+\app\api\invoices\[id]\route.ts
+\app\api\manufacturers\route.ts
+\app\api\manufacturers\[id]\route.ts
+\app\api\payments\route.ts
+\app\api\products\route.ts
+\app\api\products\[id]\route.ts
+\app\api\returns\route.ts
+\app\api\settings\backup\route.ts
+\app\api\settings\danger\route.ts
+\app\api\settings\logo\route.ts
+\app\api\settings\route.ts
+\app\api\users\route.ts
+\app\api\users\[id]\permissions\route.ts
+\app\api\users\[id]\route.ts
+\src\app\api\clients\route.ts
+
+=== COMPONENTS ===
+\analyze-project.js
+\app\accounting\page.tsx
+\app\ai\page.tsx
+\app\analysis\page.tsx
+\app\audit\page.tsx
+\app\clients\add\page.tsx
+\app\clients\page.tsx
+\app\clients\[id]\page.tsx
+\app\inventory\add\page.tsx
+\app\inventory\page.tsx
+\app\inventory\[id]\edit\page.tsx
+\app\inventory\[id]\page.tsx
+\app\invoices\add\page.tsx
+\app\invoices\historical\page.tsx
+\app\invoices\page.tsx
+\app\invoices\[id]\page.tsx
+\app\invoices\[id]\return\page.tsx
+\app\layout.tsx
+\app\login\page.tsx
+\app\manufacturers\add\page.tsx
+\app\manufacturers\page.tsx
+\app\manufacturers\[id]\edit\page.tsx
+\app\manufacturers\[id]\page.tsx
+\app\page.tsx
+\app\returns\page.tsx
+\app\settings\page.tsx
+\app\unauthorized\page.tsx
+\components\AI\AIFloatingChat.tsx
+\components\AI\Dashboard.tsx
+\components\Navbar.tsx
+\components\UI\ClientOnly.tsx
+
+=== FUNCTIONS ===
+\analyze-project.js (line 28): function scanDir(dir) {
+\analyze-project.js (line 52): function classifyFile(filePath, content) {
+\analyze-project.js (line 74): function extractFunctions(filePath, content) {
+\analyze-project.js (line 92): function writeOutput() {
+\app\accounting\page.tsx (line 168): const rows = invoices.filter((inv) => {
+\app\accounting\page.tsx (line 208): const balance    = rows.reduce((s, i) => s + i.total, 0);
+\app\accounting\page.tsx (line 269): const fetchStats = async () => {
+\app\accounting\page.tsx (line 281): const searchClientStatement = async () => {
+\app\accounting\page.tsx (line 300): const filteredInvoices = clientInvoices.filter((inv) => {
+\app\accounting\page.tsx (line 307): const handleDownloadPdf = async (type: 'unpaid' | 'paid') => {
+\app\accounting\page.tsx (line 321): const handleAddExpense = async () => {
+\app\accounting\page.tsx (line 341): const openEdit = (exp: Expense) => {
+\app\accounting\page.tsx (line 347): const handleSaveEdit = async () => {
+\app\accounting\page.tsx (line 365): const handleDeleteExpense = async (exp: Expense) => {
+\app\accounting\page.tsx (line 378): const filteredTotal   = filteredInvoices.reduce((s, i) => s + i.total, 0);
+\app\accounting\page.tsx (line 379): const filteredPaid    = filteredInvoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
+\app\accounting\page.tsx (line 380): const filteredPending = filteredInvoices.filter((i) => i.status !== 'PAID').reduce((s, i) => s + i.total, 0);
+\app\accounting\page.tsx (line 381): const unpaidCount     = filteredInvoices.filter((i) => i.status !== 'PAID').length;
+\app\accounting\page.tsx (line 382): const paidCount       = filteredInvoices.filter((i) => i.status === 'PAID').length;
+\app\accounting\page.tsx (line 849): function DownloadIcon() {
+\app\accounting\page.tsx (line 856): function SpinnerIcon() {
+\app\accounting\page.tsx (line 864): function CalendarIcon() {
+\app\accounting\page.tsx (line 871): function EditIcon() {
+\app\accounting\page.tsx (line 878): function TrashIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+\app\ai\page.tsx (line 43): const fmt = (n: number) => `ZMW ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+\app\ai\page.tsx (line 44): const now  = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+\app\ai\page.tsx (line 46): function AIResponse({ text }: { text: string }) {
+\app\ai\page.tsx (line 48): const lines = text.split('\n').filter(l => l.trim());
+\app\ai\page.tsx (line 85): const runAnalysis = async (type: ActiveTab) => {
+\app\ai\page.tsx (line 101): const handleTabChange = (tab: ActiveTab) => {
+\app\ai\page.tsx (line 106): const sendChat = async () => {
+\app\analysis\page.tsx (line 36): const fetchAll = async () => {
+\app\analysis\page.tsx (line 53): const live = allInv.filter((i) => !i.isHistorical);
+\app\analysis\page.tsx (line 72): const filtered = invoices.filter((inv) => {
+\app\analysis\page.tsx (line 79): const monthlyData = (() => {
+\app\analysis\page.tsx (line 91): const maxRevenue = Math.max(...monthlyData.map((d) => d.revenue), 1);
+\app\analysis\page.tsx (line 93): const topProducts = (() => {
+\app\analysis\page.tsx (line 97): const name = item.product?.name ?? (item.productSnapshot ? (() => { try { return JSON.parse(item.productSnapshot!).name; } catch { return 'Unknown'; } })() : 'Unknown');
+\app\analysis\page.tsx (line 105): const maxProdRevenue = Math.max(...topProducts.map((p) => p.revenue), 1);
+\app\analysis\page.tsx (line 107): const topClients = (() => {
+\app\analysis\page.tsx (line 117): const maxClientSpend = Math.max(...topClients.map((c) => c.spend), 1);
+\app\analysis\page.tsx (line 120): const lowStock = products.filter((p) => p.currentStock <= p.minStock);
+\app\analysis\page.tsx (line 121): const expiring = products.filter((p) => p.expiryDate && new Date(p.expiryDate) <= in30Days);
+\app\analysis\page.tsx (line 123): const fmt = (n: number) => `K${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+\app\analysis\page.tsx (line 476): const count = filtered.filter((i) => !i.isHistorical && i.status === status).length;
+\app\api\accounting\route.ts (line 19): const paid    = allInvoices.filter((i) => i.status === 'PAID');
+\app\api\accounting\route.ts (line 20): const pending = allInvoices.filter((i) => i.status === 'PENDING' || i.status === 'OVERDUE');
+\app\api\accounting\route.ts (line 22): const totalRevenue   = paid.reduce((s, i) => s + i.total, 0);
+\app\api\accounting\route.ts (line 26): const pendingRevenue = pending.reduce((s, i) => s + i.total, 0);
+\app\api\accounting\route.ts (line 28): const totalRefunds = returns.reduce((sum, r) => {
+\app\api\accounting\route.ts (line 30): const item  = items.find((it: any) => it.productId === r.productId);
+\app\api\accounting\route.ts (line 34): const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+\app\api\ai\route.ts (line 49): const totalRevenue = invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
+\app\api\ai\route.ts (line 50): const monthRevenue = invoices.filter(i => i.status === 'PAID' && new Date(i.invoiceDate) >= thirtyDaysAgo).reduce((s, i) => s + i.total, 0);
+\app\api\ai\route.ts (line 51): const pendingValue = invoices.filter(i => i.status === 'PENDING').reduce((s, i) => s + i.total, 0);
+\app\api\ai\route.ts (line 52): const overdueValue = invoices.filter(i => i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0);
+\app\api\ai\route.ts (line 53): const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+\app\api\ai\route.ts (line 66): const topProducts = Object.values(salesMap).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+\app\api\ai\route.ts (line 69): const clientStats = clients.map(c => {
+\app\api\ai\route.ts (line 70): const paid = c.invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
+\app\api\ai\route.ts (line 71): const unpaid = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s, i) => s + i.total, 0);
+\app\api\ai\route.ts (line 72): const overdue = c.invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED' && new Date(i.dueDate) < now2).length;
+\app\api\ai\route.ts (line 73): const recent = c.invoices.filter(i => new Date(i.invoiceDate) >= thirtyDaysAgo).length;
+\app\api\ai\route.ts (line 74): const lastDate = c.invoices.length > 0 ? new Date(Math.max(...c.invoices.map(i => new Date(i.invoiceDate).getTime()))).toLocaleDateString('en-GB') : 'Never';
+\app\api\ai\route.ts (line 75): const products = [...new Set(c.invoices.flatMap(i => i.items.map(it => it.product?.name)).filter(Boolean))];
+\app\api\ai\route.ts (line 80): const lowStock = products.filter(p => p.currentStock <= p.reorderLevel).map(p => ({ name: p.name, current: p.currentStock, min: p.minStock, reorder: p.reorderLevel, price: p.price })).sort((a, b) => a.current - b.current);
+\app\api\ai\route.ts (line 81): const expiryRisk = products.map(p => ({ name: p.name, days: Math.ceil((new Date(p.expiryDate).getTime() - now2.getTime()) / 86400000), stock: p.currentStock, value: p.price * p.currentStock })).filter(p => p.days <= 180).sort((a, b) => a.days - b.days);
+\app\api\ai\route.ts (line 84): const inactive = clients.filter(c => {
+\app\api\ai\route.ts (line 201): const highRisk = d.clientStats.filter(c => c.overdue > 0 || c.unpaid > 0);
+\app\api\ai\route.ts (line 215): const expList = Object.entries(d.expCats).map(([cat, amt]) => `${cat}: K${(amt as number).toFixed(2)}`).join('; ');
+\app\api\invoices\historical\route.ts (line 16): function resolveStatus(status?: string): InvoiceStatus {
+\app\api\invoices\historical\route.ts (line 99): const invoice = await prisma.$transaction(async (tx) => {
+\app\api\invoices\route.ts (line 63): function resolveStatus(status: string): InvoiceStatus {
+\app\api\invoices\route.ts (line 152): const invoice = await prisma.$transaction(async (tx) => {
+\app\api\invoices\[id]\payments\route.ts.tsx (line 40): const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+\app\api\invoices\[id]\payments\route.ts.tsx (line 43): const byMethod = payments.reduce((acc: Record<string, number>, p) => {
+\app\api\invoices\[id]\payments\route.ts.tsx (line 121): const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+\app\api\invoices\[id]\return\route.ts (line 28): const invoiceItem = invoice.items.find((i) => i.productId === returnItem.productId);
+\app\api\invoices\[id]\return\route.ts (line 34): const result = await prisma.$transaction(async (tx) => {
+\app\api\invoices\[id]\return\route.ts (line 44): const returnAmount = items.reduce((sum, item) => {
+\app\api\invoices\[id]\return\route.ts (line 45): const invoiceItem = invoice.items.find((i) => i.productId === item.productId);
+\app\api\invoices\[id]\return\route.ts (line 55): const returnedProductNames = items.map((item) => {
+\app\api\invoices\[id]\return\route.ts (line 56): const inv = invoice.items.find((i) => i.productId === item.productId);
+\app\api\invoices\[id]\route.ts (line 61): const updated = await prisma.$transaction(async (tx) => {
+\app\api\payments\route.ts (line 54): const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+\app\api\payments\route.ts (line 56): const byMethod = payments.reduce((acc: Record<string, { count: number; total: number }>, p) => {
+\app\api\payments\route.ts (line 139): const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+\app\api\products\route.ts (line 49): const productsWithStatus = products.map((p) => ({
+\app\audit\page.tsx (line 74): const fetchLogs = async () => {
+\app\audit\page.tsx (line 95): const handleSearch = (e: React.FormEvent) => {
+\app\audit\page.tsx (line 101): const formatAction = (action: string) =>
+\app\audit\page.tsx (line 104): const parseJson = (s: string | null) => {
+\app\audit\page.tsx (line 109): const formatTimestamp = (ts: string) => {
+\app\clients\add\page.tsx (line 22): const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+\app\clients\add\page.tsx (line 30): const handleSubmit = async (e: React.FormEvent) => {
+\app\clients\page.tsx (line 28): const loadClients = async () => {
+\app\clients\page.tsx (line 45): const handleDelete = async (id: string) => {
+\app\clients\page.tsx (line 73): const totalCredit = clients.reduce((sum, client) => sum + (client.creditLimit || 0), 0);
+\app\clients\page.tsx (line 74): const companies = clients.filter(c => c.type === 'COMPANY').length;
+\app\clients\page.tsx (line 75): const individuals = clients.filter(c => c.type === 'INDIVIDUAL').length;
+\app\clients\[id]\page.tsx (line 34): const loadClient = async () => {
+\app\clients\[id]\page.tsx (line 59): const fetchClientInvoices = async (clientName: string) => {
+\app\clients\[id]\page.tsx (line 66): const mine = all.filter((inv: any) => inv.client?.name === clientName || inv.clientId === clientId);
+\app\clients\[id]\page.tsx (line 73): const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+\app\clients\[id]\page.tsx (line 78): const handleSave = async () => {
+\app\clients\[id]\page.tsx (line 101): const handleDelete = async () => {
+\app\clients\[id]\page.tsx (line 114): const totalPurchase  = invoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + i.total, 0);
+\app\clients\[id]\page.tsx (line 115): const outstanding    = invoices.filter((i) => i.status === 'PENDING' || i.status === 'OVERDUE').reduce((s, i) => s + i.total, 0);
+\app\clients\[id]\page.tsx (line 119): const statusColor = (status: string) => {
+\app\clients\[id]\page.tsx (line 128): const statusLabel = (status: string) => {
+\app\inventory\add\page.tsx (line 46): const fetchManufacturers = async () => {
+\app\inventory\add\page.tsx (line 57): const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+\app\inventory\add\page.tsx (line 62): const handleSubmit = async (e: React.FormEvent) => {
+\app\inventory\page.tsx (line 49): const fetchProducts = async (force = false) => {
+\app\inventory\page.tsx (line 79): const handleSearch = (e: React.FormEvent) => {
+\app\inventory\page.tsx (line 84): const getStockColor = (status: string) => {
+\app\inventory\page.tsx (line 93): const getTypeColor = (type: string) => {
+\app\inventory\page.tsx (line 105): const handleDelete = async (id: string, name: string) => {
+\app\inventory\page.tsx (line 126): const handlePrintPDF = () => {
+\app\inventory\[id]\edit\page.tsx (line 70): const fetchManufacturers = async () => {
+\app\inventory\[id]\edit\page.tsx (line 82): const fetchProduct = async () => {
+\app\inventory\[id]\edit\page.tsx (line 127): const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+\app\inventory\[id]\edit\page.tsx (line 132): const handleSubmit = async (e: React.FormEvent) => {
+\app\inventory\[id]\page.tsx (line 45): const fetchProduct = async () => {
+\app\inventory\[id]\page.tsx (line 59): const handleDelete = async () => {
+\app\inventory\[id]\page.tsx (line 74): const getStockColor = (status: string) => {
+\app\inventory\[id]\page.tsx (line 83): const getProductTypeLabel = (type: ProductType) => {
+\app\inventory\[id]\page.tsx (line 91): const getTypeColor = (type: ProductType) => {
+\app\invoices\add\page.tsx (line 51): const fetchClients = async () => {
+\app\invoices\add\page.tsx (line 60): const fetchProducts = async () => {
+\app\invoices\add\page.tsx (line 70): const calculateTotals = () => {
+\app\invoices\add\page.tsx (line 71): const subtotal   = items.reduce((sum, item) => sum + (parseInt(String(item.quantity)) || 0) * (parseFloat(String(item.price)) || 0), 0);
+\app\invoices\add\page.tsx (line 77): const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+\app\invoices\add\page.tsx (line 82): const handleItemChange = (index: number, field: string, value: string) => {
+\app\invoices\add\page.tsx (line 85): const product = products.find((p) => p.id === value);
+\app\invoices\add\page.tsx (line 110): const addItem    = () => setItems([...items, { productId: '', quantity: 1, freeSample: 0, price: 0, maxStock: 0, productName: '' }]);
+\app\invoices\add\page.tsx (line 111): const removeItem = (i: number) => { if (items.length > 1) setItems(items.filter((_, idx) => idx !== i)); };
+\app\invoices\add\page.tsx (line 113): const handleSubmit = async (e: React.FormEvent) => {
+\app\invoices\add\page.tsx (line 122): const product = products.find((p) => p.id === item.productId);
+\app\invoices\historical\page.tsx (line 71): const subtotal = items.reduce((sum, item) => {
+\app\invoices\historical\page.tsx (line 78): const fetchClients = async () => {
+\app\invoices\historical\page.tsx (line 89): const fetchProducts = async () => {
+\app\invoices\historical\page.tsx (line 107): const handleItemChange = (index: number, field: string, value: string | boolean) => {
+\app\invoices\historical\page.tsx (line 122): const product = products.find((p) => p.id === value);
+\app\invoices\historical\page.tsx (line 139): const addItem = () => {
+\app\invoices\historical\page.tsx (line 154): const removeItem = (index: number) => {
+\app\invoices\historical\page.tsx (line 160): const handleSubmit = async (e: React.FormEvent) => {
+\app\invoices\page.tsx (line 66): const fetchInvoices = async () => {
+\app\invoices\page.tsx (line 97): const handleSearch = (e: React.FormEvent) => {
+\app\invoices\page.tsx (line 103): const handleDelete = async (invoice: Invoice) => {
+\app\invoices\page.tsx (line 126): const getStatusColor = (status: string) => {
+\app\invoices\page.tsx (line 137): const getStatusLabel = (status: string) => {
+\app\invoices\page.tsx (line 148): const calculateStats = () => {
+\app\invoices\[id]\page.tsx (line 67): const fetchInvoice = async () => {
+\app\invoices\[id]\page.tsx (line 82): const handleMarkPaid = async () => {
+\app\invoices\[id]\page.tsx (line 110): const handleDelete = async () => {
+\app\invoices\[id]\page.tsx (line 123): const fmt = (n: number) => `K${n.toFixed(2)}`;
+\app\invoices\[id]\page.tsx (line 125): const getProductName = (item: InvoiceItem) => {
+\app\invoices\[id]\page.tsx (line 165): const totalPaid = invoice.payments.reduce((s, p) => s + p.amount, 0);
+\app\invoices\[id]\return\page.tsx (line 78): const fetchInvoice = async () => {
+\app\invoices\[id]\return\page.tsx (line 97): const handleQuantityChange = (index: number, value: string) => {
+\app\invoices\[id]\return\page.tsx (line 107): const handleReasonChange = (index: number, value: string) => {
+\app\invoices\[id]\return\page.tsx (line 113): const calculateReturnTotal = () => {
+\app\invoices\[id]\return\page.tsx (line 119): const handleSubmit = async (e: React.FormEvent) => {
+\app\invoices\[id]\return\page.tsx (line 125): const itemsToReturn = returnItems.filter((item) => item.quantity > 0);
+\app\login\page.tsx (line 14): const handleSubmit = async (e: React.FormEvent) => {
+\app\manufacturers\add\page.tsx (line 22): const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+\app\manufacturers\add\page.tsx (line 30): const handleSubmit = async (e: React.FormEvent) => {
+\app\manufacturers\page.tsx (line 19): const loadManufacturers = async () => {
+\app\manufacturers\page.tsx (line 32): const handleSearch = () => {
+\app\manufacturers\page.tsx (line 36): const handleDelete = async (id: string) => {
+\app\manufacturers\[id]\edit\page.tsx (line 30): const fetchManufacturer = async () => {
+\app\manufacturers\[id]\edit\page.tsx (line 47): const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+\app\manufacturers\[id]\edit\page.tsx (line 55): const handleSubmit = async (e: React.FormEvent) => {
+\app\manufacturers\[id]\page.tsx (line 21): const fetchManufacturer = async () => {
+\app\manufacturers\[id]\page.tsx (line 38): const handleDelete = async () => {
+\app\page.tsx (line 98): const observer = new MutationObserver((mutations) => {
+\app\page.tsx (line 125): const fetchCurrentUser = async () => {
+\app\page.tsx (line 137): const fetchSettings = async () => {
+\app\page.tsx (line 149): const fetchStats = async () => {
+\app\page.tsx (line 183): const handleLogout = async () => {
+\app\page.tsx (line 525): function StatCard({ label, value, sub, accent, icon, alert = false }: {
+\app\page.tsx (line 549): function QuickAction({ href, icon, label, color }: { href: string; icon: React.ReactNode; label: string; color: string }) {
+\app\page.tsx (line 558): function MiniStat({ label, value, dot }: { label: string; value: string; dot: string }) {
+\app\page.tsx (line 571): function ModuleCard({ href, icon, label, desc, accent }: { href: string; icon: React.ReactNode; label: string; desc: string; accent: string }) {
+\app\page.tsx (line 583): function GridIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 586): function ReceiptIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 589): function UsersIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 592): function BoxIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 595): function BuildingIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 598): function ClockIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 601): function RefreshIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 604): function WalletIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 607): function TrendIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 610): function ShieldIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 613): function CogIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 616): function PlusIcon({ className = 'w-4 h-4' }) {
+\app\page.tsx (line 619): function ChevronLeftIcon() {
+\app\page.tsx (line 622): function ChevronRightIcon() {
+\app\page.tsx (line 625): function LogoutIcon({ className = 'w-4 h-4' }) {
