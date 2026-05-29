@@ -22,7 +22,10 @@ interface Return {
 
 interface Invoice {
   id: string; invoiceNumber: string; invoiceDate: string; dueDate: string;
-  status: string; subTotal: number; tax: number; total: number;
+  status: string;
+  subTotal?: number; subtotal?: number;
+  tax: number; total: number;
+  discount?: number;
   notes: string | null; hasReturns: boolean; isHistorical: boolean;
   createdAt: string;
   client: { id: string; name: string; email: string | null; phone: string | null; address: string | null };
@@ -161,8 +164,12 @@ export default function InvoiceDetailPage() {
     );
   }
 
-  const isPaid    = invoice.status === 'PAID';
-  const totalPaid = invoice.payments.reduce((s, p) => s + p.amount, 0);
+  const isPaid      = invoice.status === 'PAID';
+  const totalPaid   = invoice.payments.reduce((s, p) => s + p.amount, 0);
+  // Handle both casing variants from the API (subTotal vs subtotal)
+  const resolvedSubTotal = invoice.subTotal ?? invoice.subtotal ?? invoice.total;
+  const resolvedDiscount = invoice.discount ?? 0;
+  const balance          = Math.max((invoice.total ?? 0) - totalPaid, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
@@ -302,8 +309,14 @@ export default function InvoiceDetailPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-blue-100">Subtotal</span>
-                <span className="text-sm font-semibold">{fmt(invoice.subTotal)}</span>
+                <span className="text-sm font-semibold">{fmt(resolvedSubTotal)}</span>
               </div>
+              {resolvedDiscount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-blue-100">Discount</span>
+                  <span className="text-sm font-semibold text-yellow-300">-{fmt(resolvedDiscount)}</span>
+                </div>
+              )}
               {invoice.tax > 0 && (
                 <div className="flex justify-between">
                   <span className="text-sm text-blue-100">Tax</span>
@@ -311,13 +324,25 @@ export default function InvoiceDetailPage() {
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t border-white/20">
-                <span className="font-bold">Total</span>
-                <span className="font-bold">{fmt(invoice.total)}</span>
+                <span className="font-bold">Grand Total</span>
+                <span className="font-bold text-lg">{fmt(invoice.total)}</span>
               </div>
-              {isPaid && (
+              {totalPaid > 0 && (
                 <div className="flex justify-between">
                   <span className="text-sm text-blue-100">Amount Paid</span>
                   <span className="text-sm font-semibold text-green-300">{fmt(totalPaid)}</span>
+                </div>
+              )}
+              {!isPaid && totalPaid > 0 && (
+                <div className="flex justify-between pt-1 border-t border-white/20">
+                  <span className="text-sm font-bold text-yellow-200">Balance Due</span>
+                  <span className="text-sm font-bold text-yellow-200">{fmt(balance)}</span>
+                </div>
+              )}
+              {!isPaid && totalPaid === 0 && (
+                <div className="flex justify-between pt-1 border-t border-white/20">
+                  <span className="text-sm font-bold text-yellow-200">Outstanding</span>
+                  <span className="text-sm font-bold text-yellow-200">{fmt(invoice.total)}</span>
                 </div>
               )}
             </div>
