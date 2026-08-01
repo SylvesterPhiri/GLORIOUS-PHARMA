@@ -1,8 +1,10 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest, hasPermission } from '@/src/lib/auth';
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/me'];
+
+// Paths that must always work, even while MAINTENANCE_MODE is on.
+const MAINTENANCE_BYPASS = ['/maintenance', '/_next', '/favicon'];
 
 const ROUTE_PERMISSIONS: { path: string; permission: string }[] = [
   { path: '/inventory',         permission: 'inventory.view'     },
@@ -37,6 +39,17 @@ const WRITE_PERMISSIONS: { path: string; methods: string[]; permission: string }
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method       = request.method;
+
+  // 0. Maintenance mode — short-circuits everything below, including auth.
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    if (!MAINTENANCE_BYPASS.some((p) => pathname.startsWith(p))) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/maintenance';
+      const response = NextResponse.rewrite(url, { status: 503 });
+      response.headers.set('Retry-After', '7200');
+      return response;
+    }
+  }
 
   if (
     PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||

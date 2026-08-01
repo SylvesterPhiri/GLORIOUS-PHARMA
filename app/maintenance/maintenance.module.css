@@ -1,0 +1,133 @@
+.wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #1c3327 0%, #12211b 55%, #0d1a15 100%);
+  color: #f2ede1;
+}
+
+.card {
+  width: 100%;
+  max-width: 30rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c4893f;
+  margin-bottom: 2.25rem;
+}
+
+/* Signature element: a flatlining pulse that blips, once, on a loop */
+.pulse {
+  width: 100%;
+  max-width: 15rem;
+  height: 3.5rem;
+  margin-bottom: 2rem;
+  overflow: visible;
+}
+
+.pulseLine {
+  fill: none;
+  stroke: #c4893f;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: draw 3.2s ease-in-out infinite;
+}
+
+@keyframes draw {
+  0% { stroke-dashoffset: 300; opacity: 0.35; }
+  8% { opacity: 1; }
+  45% { stroke-dashoffset: 0; opacity: 1; }
+  92% { opacity: 0.35; }
+  100% { stroke-dashoffset: 0; opacity: 0.35; }
+}
+
+.headline {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.9rem, 5vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.9rem;
+  color: #f9f6ef;
+}
+
+.body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(242, 237, 225, 0.72);
+  max-width: 26rem;
+  margin: 0 0 2.75rem;
+}
+
+.label {
+  width: 100%;
+  border: 1px dashed rgba(196, 137, 63, 0.4);
+  border-radius: 0.5rem;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: rgba(196, 137, 63, 0.05);
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.labelKey {
+  color: rgba(242, 237, 225, 0.5);
+  text-transform: uppercase;
+}
+
+.labelValue {
+  color: #f2ede1;
+  text-align: right;
+}
+
+.dot {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #c4893f;
+  margin-right: 0.45rem;
+  vertical-align: middle;
+  animation: blink 2.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulseLine {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 0.85;
+  }
+  .dot {
+    animation: none;
+  }
+}
